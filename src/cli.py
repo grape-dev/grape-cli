@@ -5,12 +5,12 @@ import time
 
 import click
 
-from grape_cli import __version__, config
-from grape_cli.client import ApiClient, CliError
-from grape_cli.commands.api import api_command
-from grape_cli.commands.git import git_command
-from grape_cli.contracts import load_contract
-from grape_cli.registry import build_groups, command_tree
+from src import __version__, config
+from src.client import ApiClient, CliError
+from src.commands.api import api_command
+from src.commands.git import git_command
+from src.contracts import load_contract
+from src.registry import build_groups, command_tree
 
 
 def wait_command() -> click.Command:
@@ -107,7 +107,7 @@ def cli(ctx, base_url: str | None, token: str | None, timeout: int | None):
       grape --base-url https://grape.example.com --grape-api-token grape_xxx skills list --json-out
       grape --timeout 120 tasks wait --task-id 56
     """
-    from grape_cli.config import set_cli_params
+    from src.config import set_cli_params
     set_cli_params(base_url=base_url or "", token=token or "", timeout=timeout or 0)
     if ctx.invoked_subcommand is None:
         click.echo(ctx.get_help())

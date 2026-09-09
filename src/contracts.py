@@ -2,8 +2,8 @@
 import json
 from pathlib import Path
 
-from grape_cli import config
-from grape_cli.client import ApiClient, CliError
+from src import config
+from src.client import ApiClient, CliError
 
 
 def cache_path(version: str = "") -> Path:

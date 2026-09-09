@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-grape = "grape_cli.cli:main"
+grape = "src.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -17,4 +17,4 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["grape_cli*"]
+include = ["src*"]

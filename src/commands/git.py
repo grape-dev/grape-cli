@@ -11,7 +11,7 @@ import sys
 
 import click
 
-from grape_cli.client import ApiClient, basic_auth
+from src.client import ApiClient, basic_auth
 
 
 def git_command() -> click.Command:

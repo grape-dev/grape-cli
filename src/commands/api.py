@@ -3,7 +3,7 @@ import json
 
 import click
 
-from grape_cli.client import ApiClient
+from src.client import ApiClient
 
 
 def api_command() -> click.Command:

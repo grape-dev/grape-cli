@@ -10,7 +10,7 @@ import json
 
 import click
 
-from grape_cli.client import ApiClient, CliError
+from src.client import ApiClient, CliError
 
 GROUP_ALIAS = {"gitrepo": "git-repo"}
 

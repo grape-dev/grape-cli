@@ -3,7 +3,7 @@ import base64
 
 import httpx
 
-from grape_cli import config
+from src import config
 
 
 class CliError(Exception):

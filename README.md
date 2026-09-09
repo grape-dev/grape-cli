@@ -172,9 +172,9 @@ grape tasks mine --status active
 ## Project layout
 
 ```
-src/grape_cli/
+src/
 ├── __init__.py          # version
-├── __main__.py          # python -m grape_cli
+├── __main__.py          # python -m src
 ├── cli.py               # click entrypoint (contract group + built-ins)
 ├── client.py            # HTTP client (auth, timeout, error mapping)
 ├── config.py            # config resolution: args > env > ~/.grape/config.json

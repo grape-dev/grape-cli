@@ -165,9 +165,9 @@ grape tasks mine --status active
 ## 工程结构
 
 ```
-src/grape_cli/
+src/
 ├── __init__.py          # 版本号
-├── __main__.py          # python -m grape_cli
+├── __main__.py          # python -m src
 ├── cli.py               # click 入口（契约命令组 + 内置命令）
 ├── client.py            # HTTP 客户端（认证、超时、错误映射）
 ├── config.py            # 配置解析：参数 > 环境变量 > ~/.grape/config.json
