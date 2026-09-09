@@ -1,6 +1,10 @@
+<div align="center">
+
 # grape CLI
 
-Agentic DevOps CLI: **contract-driven command generation** + `git` local passthrough
+</div>
+
+grape's command-line tool: **contract-driven command generation** + `git` local passthrough
 (platform token never leaves the process; zero exposure).
 
 - Reads the server's `/openapi.json` (OpenAPI 3.x) and auto-generates `grape <group> <verb>` commands.

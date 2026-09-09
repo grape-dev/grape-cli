@@ -1,6 +1,10 @@
+<div align="center">
+
 # grape CLI
 
-Agentic DevOps 命令行工具：**契约驱动命令生成** + `git` 本地传输（平台 token 零暴露）。
+</div>
+
+grape 的命令行工具：**契约驱动命令生成** + `git` 本地传输（平台 token 零暴露）。
 
 - 读服务端 `/openapi.json`（OpenAPI 3.x）自动生成 `grape <group> <verb>` 命令；
 - **新增服务端接口 → 重新拉契约 → CLI 自动获得新命令，无需改 CLI 源码**；
