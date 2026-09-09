@@ -1,17 +1,54 @@
-<div align="center">
+<h1 align="center">grape CLI</h1>
 
-# grape CLI
+<p align="center">English | <a href="README.zh.md">中文</a></p>
 
-</div>
+<p align="center">
+  <strong>Contract-driven CLI for the Grape Agentic DevOps platform — zero token exposure</strong>
+  <br>
+  Point it at any Grape server, and new commands appear automatically.
+</p>
 
-grape's command-line tool: **contract-driven command generation** + `git` local passthrough
-(platform token never leaves the process; zero exposure).
-
-- Reads the server's `/openapi.json` (OpenAPI 3.x) and auto-generates `grape <group> <verb>` commands.
-- **Add a server endpoint → re-fetch the contract → the CLI gains the command automatically, no source changes.**
-- Auth reuses the grape token (Bearer by default) from config / env, attached automatically.
+<p align="center">
+  <a href="#what-is-grape-cli">What is grape CLI</a> ·
+  <a href="#the-problem">The Problem</a> ·
+  <a href="#core-features">Core Features</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#configuration--token">Configuration & Token</a> ·
+  <a href="#commands">Commands</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#development--testing">Development & Testing</a>
+</p>
 
 ---
+
+## What is grape CLI
+
+Grape CLI is the command-line client for the [Grape](https://gitcode.com/grape-dev/grape) platform.
+It reads the server's `/openapi.json`, auto-generates `grape <group> <verb>` commands, and runs
+native `git` operations locally with credentials kept strictly in-process.
+
+**In one sentence: add a server endpoint → re-fetch the contract → the CLI gains the command, no source changes.**
+
+## The Problem
+
+Interacting with a contract-driven API usually means hand-written `curl`, fragile scripts, and
+tokens leaking into shell history:
+
+| | Manual | grape CLI |
+|-|--------|-----------|
+| Call a new endpoint | Write `curl` + parse JSON by hand | `grape <group> <verb>` auto-generated from OpenAPI |
+| Auth | Copy tokens into shell history / files | Token from one-shot args, env, or config — attached automatically |
+| Run git against the platform | Persist remote credentials on disk | `grape git` injects creds in-process, never persisted |
+| Server API changes | Update every client script | Re-fetch contract — CLI updates itself |
+
+## Core Features
+
+- **Contract-driven commands** — OpenAPI 3.x `operationId` → click command tree (`tasks_mine` → `grape tasks mine`)
+- **Three auth channels** — Bearer / `PRIVATE-TOKEN` / `?access_token=`, injected automatically
+- **Native git passthrough** — `grape git --repo owner/repo ...` with `GIT_CONFIG`-injected credentials
+- **Built-in `tasks wait`** — poll a task until a terminal state (`completed` / `failed` / `cancelled`)
+- **Generic `api` fallback** — call any contract endpoint you haven't generated a command for
+- **Machine-readable output** — `--json-out` for single-line JSON consumed by workers
 
 ## Install
 
@@ -20,11 +57,9 @@ pip install -e .                               # from repo root (editable; recom
 /opt/grape-cli/bin/pip install -e /path/to/grape-cli   # or a dedicated venv
 ```
 
-Verify with `grape --version`.
+Verify with `grape --version`. Requires Python >= 3.10.
 
----
-
-## Configuration & token
+## Configuration & Token
 
 Precedence (highest first):
 `--token / --base-url / --timeout` (one-shot, process-only) > `GRAPE_SESSION_TOKEN` >
@@ -37,8 +72,6 @@ Precedence (highest first):
 | Config file | `{ "base_url": "...", "token": "" }` in `~/.grape/config.json` | Persistent defaults; prefer env vars for token |
 
 > Without a token the CLI prompts you to configure one.
-
----
 
 ## Commands
 
@@ -88,9 +121,7 @@ grape api GET /api/scenes
 grape api POST /api/tasks/create -d '{"repo_key":"o/r","title":"x"}'
 ```
 
----
-
-## Quick start
+## Quick Start
 
 ```bash
 # One-shot (no env vars required)
@@ -103,14 +134,10 @@ grape commands | head -40
 grape skills list --json-out
 ```
 
----
-
-## Exit codes
+## Exit Codes
 
 `0` success · `1` generic/config error · `2` usage error ·
 `>=400` HTTP status passthrough (e.g. `401`) · `130` Ctrl+C.
-
----
 
 ## Security
 
@@ -118,13 +145,25 @@ grape skills list --json-out
 - Tokens never appear in output/errors; git credentials injected via `GIT_CONFIG` stay in-process.
 - `tk_` session tokens auto-expire with the task/session; `grape_` user keys can be revoked.
 
----
-
-## Development
-
-Run the CLI test suite from the repo root:
+## Development & Testing
 
 ```bash
 pip install -e .[dev]
 python -m pytest test/ -q
 ```
+
+Test coverage: config precedence, HTTP client (auth/errors), contract loading & caching,
+command generation, CLI end-to-end, and git passthrough (credential injection / exit codes).
+
+## Contributing
+
+1. **Open an Issue** — describe the problem or feature
+2. **Fork & Develop** — work on a feature branch (`feat/`, `fix/`, `refactor/`, `docs/`, `chore/`)
+3. **Add Tests** — include pytest tests for new behavior
+4. **Submit a PR** — describe changes, test results, and linked Issue
+
+## Feedback
+
+- **GitCode Issues**: https://gitcode.com/grape-dev/grape-cli/issues
+  - Bugs: include environment, repro steps, and logs
+  - Feature suggestions: describe the use case and expected behavior
