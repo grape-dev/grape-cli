@@ -113,3 +113,14 @@ grape skills list --json-out
 - No create/revoke token subcommands (prevents self-escalation); user-level API keys come from the Web UI.
 - Tokens never appear in output/errors; git credentials injected via `GIT_CONFIG` stay in-process.
 - `tk_` session tokens auto-expire with the task/session; `grape_` user keys can be revoked.
+
+---
+
+## Development
+
+Run the CLI test suite from the repo root:
+
+```bash
+pip install -e .[dev]
+python -m pytest test/ -q
+```

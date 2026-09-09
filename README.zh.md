@@ -111,3 +111,14 @@ grape skills list --json-out
 - CLI **不提供** create/revoke token 子命令（防自举越权）；用户级 API Key 由 Web UI 生成。
 - token 不出现在输出/错误信息（`GIT_CONFIG` 注入的 git 凭据同样不外泄）。
 - `tk_` 会话 token 随任务/会话自动失效；`grape_` 用户 key 可吊销。
+
+---
+
+## 开发
+
+仓库根目录运行 CLI 测试：
+
+```bash
+pip install -e .[dev]
+python -m pytest test/ -q
+```
