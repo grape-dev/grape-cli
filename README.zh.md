@@ -51,9 +51,17 @@ grape CLI 是 [Grape](https://gitcode.com/grape-dev/grape) 平台的命令行客
 
 ## 安装
 
+先克隆或下载 CLI 源码：
+
 ```bash
-pip install -e .                               # 仓库根目录，editable（推荐）
-/opt/grape-cli/bin/pip install -e /path/to/grape-cli   # 或独立 venv
+git clone https://gitcode.com/grape-dev/grape-cli.git
+cd grape-cli
+
+# 仓库根目录，editable（推荐）
+pip install -e .
+# 或独立 venv
+python3 -m venv /opt/grape-cli
+/opt/grape-cli/bin/pip install -e /path/to/grape-cli
 ```
 
 装好验证：`grape --version`。需要 Python >= 3.10。

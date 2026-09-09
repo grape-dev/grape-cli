@@ -52,9 +52,17 @@ tokens leaking into shell history:
 
 ## Install
 
+Clone or download the CLI source first:
+
 ```bash
-pip install -e .                               # from repo root (editable; recommended)
-/opt/grape-cli/bin/pip install -e /path/to/grape-cli   # or a dedicated venv
+git clone https://gitcode.com/grape-dev/grape-cli.git
+cd grape-cli
+
+# From repo root (editable; recommended)
+pip install -e .
+# Or a dedicated venv (isolated from the system)
+python3 -m venv /opt/grape-cli
+/opt/grape-cli/bin/pip install -e /path/to/grape-cli
 ```
 
 Verify with `grape --version`. Requires Python >= 3.10.
