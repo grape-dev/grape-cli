@@ -72,3 +72,28 @@ def test_git_missing_binary_raises(monkeypatch, isolate_config):
     res = CliRunner().invoke(cli, ["git", "status"])
     assert res.exit_code == 1
     assert "git" in res.output
+
+
+def test_git_issue_param_is_gone(monkeypatch, isolate_config):
+    """--issue 死参数已移除：命令参数声明中不再存在。"""
+    cmd = cli.get_command(None, "git")
+    assert "issue" not in {p.name for p in cmd.params}
+
+
+def test_git_credential_missing_fields_is_friendly_error(monkeypatch, isolate_config):
+    from src.client import CliError
+
+    class _BadApi:
+        def request(self, method, path):
+            if path.endswith("/workspace"):
+                return 200, {"workspace": "C:\\ws"}
+            if path.endswith("/git-credential"):
+                return 200, {"username": "u"}  # 缺 password
+            raise AssertionError(f"unexpected path: {path}")
+
+    monkeypatch.setattr("src.commands.git.ApiClient", lambda: _BadApi())
+    monkeypatch.setattr("src.commands.git.shutil.which", lambda _: "git")
+    res = CliRunner().invoke(cli, ["git", "--repo", "owner/repo", "status"])
+    assert res.exit_code == 1
+    assert isinstance(res.exception, CliError)
+    assert "git-credential" in str(res.exception)

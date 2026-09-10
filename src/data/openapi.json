@@ -1,0 +1,5048 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agentic DevOps API",
+    "version": "2.1.0"
+  },
+  "paths": {
+    "/api/repos/member": {
+      "get": {
+        "tags": [
+          "repos"
+        ],
+        "summary": "我可操作的仓库列表",
+        "description": "获取用户可操作仓库列表：优先从 user_repos 缓存读取；缓存为空或超过 TTL 时自动从 GitCode 拉取刷新\n\n加载前先检查托管仓库在 GitCode 上是否还存在（GitCode 删仓库不发 webhook，\ngrape 收不到通知，旧记录残留导致重建同名仓库时前端误显\"已托管\"）。",
+        "operationId": "repos_member",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/managed": {
+      "get": {
+        "tags": [
+          "repos"
+        ],
+        "summary": "托管仓库列表",
+        "operationId": "repos_managed",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/deploy-url/{owner}/{repo_name}": {
+      "get": {
+        "tags": [
+          "repos"
+        ],
+        "summary": "获取仓库部署 URL",
+        "description": "获取仓库的部署访问 URL",
+        "operationId": "repos_deploy_url",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库信息（clone_url/default_branch）",
+        "operationId": "gitrepo_repo",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/workspace": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库工作区路径（CLI 本地 git 用）",
+        "operationId": "gitrepo_workspace",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/git-credential": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "一次性 git 平台凭据（方案③ CLI 内部使用，TTL 过期）",
+        "description": "返回 CLI 本地执行 git 所需的平台凭据（一次性/短期，进程内使用不落盘）。\n\ngitcode：Basic 用 username=`x-access-token`、password=配置的 gitcode token。",
+        "operationId": "gitrepo_git_credential",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/branches": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "分支列表",
+        "operationId": "gitrepo_branches",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/commits": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "提交历史",
+        "operationId": "gitrepo_commits",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/contents/{path}": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "文件内容（base64）",
+        "operationId": "gitrepo_contents",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Path"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "分支/引用",
+              "default": "",
+              "title": "Ref"
+            },
+            "description": "分支/引用"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/labels": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "标签列表",
+        "operationId": "gitrepo_labels_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "创建标签",
+        "operationId": "gitrepo_labels_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/milestones": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "里程碑列表",
+        "operationId": "gitrepo_milestones",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "all",
+              "title": "State"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/issues": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "Issue 列表",
+        "operationId": "gitrepo_issues_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "open",
+              "title": "State"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "创建 Issue",
+        "operationId": "gitrepo_issues_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/issues/{number}": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "Issue 详情",
+        "operationId": "gitrepo_issues_get",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "更新 Issue",
+        "operationId": "gitrepo_issues_update",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/issues/{number}/comments": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "Issue 评论列表",
+        "operationId": "gitrepo_issues_comments_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "创建 Issue 评论",
+        "operationId": "gitrepo_issues_comments_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/pulls": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "PR 列表",
+        "operationId": "gitrepo_pulls_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "open",
+              "title": "State"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "创建 PR",
+        "operationId": "gitrepo_pulls_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PRCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/pulls/{number}": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "PR 详情",
+        "operationId": "gitrepo_pulls_get",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "更新 PR",
+        "operationId": "gitrepo_pulls_update",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PRUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/pulls/{number}/merge": {
+      "put": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "合并 PR",
+        "operationId": "gitrepo_pulls_merge",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/pulls/{number}/comments": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "PR 评论列表",
+        "operationId": "gitrepo_pulls_comments_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "创建 PR 评论",
+        "operationId": "gitrepo_pulls_comments_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/pulls/{number}/files": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "PR 变更文件",
+        "operationId": "gitrepo_pulls_files",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/agents/{name}/{owner}/{repo}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Agent 会话配置查看",
+        "operationId": "agents_detail",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/events/detail/{seq}": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "事件详情（结果/日志）",
+        "operationId": "events_detail",
+        "parameters": [
+          {
+            "name": "seq",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Seq"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/chat/conversations": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "会话列表",
+        "operationId": "chat_conversations",
+        "parameters": [
+          {
+            "name": "repo_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/chat/messages/{conv_id}": {
+      "get": {
+        "tags": [
+          "chat"
+        ],
+        "summary": "会话消息列表",
+        "operationId": "chat_messages",
+        "parameters": [
+          {
+            "name": "conv_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Conv Id"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Before"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/skills": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "技能列表",
+        "description": "返回技能列表：official 所有用户可见；user 本人可见；repo 指定仓库可见。\nscope 参数：official/repo/user 按维度过滤；不传 = 返回全部（兼容旧逻辑）。\nq 参数：搜索词，按 skill_name / display_name / description 模糊匹配。\nsort 参数：latest（默认顺序）/ hot（按 like_count 降序）。\npage/page_size：分页参数，page_size=0 时不分页（返回全部，兼容旧逻辑）。\n扩展返回字段：is_featured, like_count, liked_by_me, scene_count, repo_count, scenes",
+        "operationId": "skills_list",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/skills/by-id/{skill_id}": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "技能详情（含 SKILL.md）",
+        "description": "返回技能详情（含 SKILL.md 内容）——按技能 id 精确查询，查到后校验归属权限。\n\n权限校验：official 可见；user 需本人；repo 需当前用户托管该仓库。",
+        "operationId": "skills_detail",
+        "parameters": [
+          {
+            "name": "skill_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Skill Id"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/a2a": {
+      "post": {
+        "tags": [
+          "webhook",
+          "a2a"
+        ],
+        "summary": "Agent 交办（A2A，grape a2a handoff）",
+        "description": "Agent-to-Agent 协议端点：对外安全路由（JWT/会话 token/API Key）+ 内部 bot-token 兼容。",
+        "operationId": "a2a_handoff",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/A2AHandoffBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/scenes": {
+      "get": {
+        "tags": [
+          "scenes"
+        ],
+        "summary": "场景列表",
+        "description": "返回所有可用场景列表（repo，不含 official）",
+        "operationId": "scenes_list",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/start": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "打开任务会话",
+        "description": "打开任务会话（\"去对话\"）——不再翻转状态。\n\ntask-status-processing-trigger-fix.md §3.3：状态变更以\"任务会话收到真实用户消息\"为准\n（mark_task_processing_by_conversation），本端点仅校验归属并返回当前状态。",
+        "operationId": "tasks_start",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/create": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "新建任务（同步建 GitCode Issue）",
+        "description": "Task Center 新建任务：同步在 GitCode 仓库创建 Issue，并按既有流程建档。\n\n- issue 责任人 = 系统 General Settings 的 Account（settings.credentials.gitcode.account，\n  即当前登录用户 gitcode 账号；也可显式传 assignee 覆盖）\n- 幂等：同仓库同标题的 open issue 存在 → 复用（不重复创建）；\n  同一 issue 的任务 id 不重复（ensure_issue_task 幂等）\n- 状态迁移：task 支持 active/processing/completed/cancelled（PUT /api/tasks/{id}/status）",
+        "operationId": "tasks_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/status": {
+      "put": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "更新任务状态",
+        "description": "任务状态迁移（active → processing → completed / cancelled；cancelled → active 可恢复）。\n\n终端状态 completed 不可改；同一任务只能单向流转（按 _TASK_STATUS_FLOWS 校验）。",
+        "operationId": "tasks_status",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskStatusBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "查询任务状态（轮询 wait 用）",
+        "description": "返回任务当前状态（含 repo/issue 上下文），供 CLI `grape tasks wait` 轮询至终态。",
+        "operationId": "tasks_status_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/complete": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "任务自报完成（grape CLI tasks complete）",
+        "description": "Agent 动作收尾后显式自报完成（issue-45-task-complete-endpoint-design.md）。\n\n- 会话 token（tk_）：任务 id 由 session_key 自动定位（M2 以 task_id 签发），校验 repo 作用域。\n- JWT / API Key（用户级）：body.task_id 必填，校验任务 repo 在该用户托管仓库内。\n- 终态幂等：completed/failed/cancelled 不再覆盖（返回现状）。\n- 完成后任务 + 事件置为成功，不经过 evaluate_agent_output 启发。",
+        "operationId": "tasks_complete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskSelfCompleteBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/mine": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "我的任务列表",
+        "description": "任务中心：当前登录用户的待处理/已完成任务（可按 repo 过滤 / 按时间排序）。\n\nsort_order: desc（默认，最新在前）/ asc（最早在前）\nmode: default（状态优先 active→processing→completed，组内按时间）/ time（纯时间序）",
+        "operationId": "tasks_mine",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(active|completed|)?$",
+              "default": "",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "repo_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按仓库过滤",
+              "default": "",
+              "title": "Repo Key"
+            },
+            "description": "按仓库过滤"
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(desc|asc)$",
+              "description": "按创建时间排序方向",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "按创建时间排序方向"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(default|time)$",
+              "description": "default=状态优先；time=纯时间序",
+              "default": "default",
+              "title": "Mode"
+            },
+            "description": "default=状态优先；time=纯时间序"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/knowledge": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "知识清单（项目级 + Agent 维度）",
+        "description": "聚合返回项目级 + Agent 维度知识清单。",
+        "operationId": "knowledge_list",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "repo_key，如 gitcode:org/test 或 org/test",
+              "default": "",
+              "title": "Repo"
+            },
+            "description": "repo_key，如 gitcode:org/test 或 org/test"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/knowledge/content": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "读取单个知识全文",
+        "description": "读取单个知识全文（相对工作区仓库目录）或通过 obs_key 直接读 OBS。",
+        "operationId": "knowledge_content",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "file",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "File"
+            }
+          },
+          {
+            "name": "obs_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Obs Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/knowledge/context": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "合并注入上下文文本",
+        "description": "返回合并注入上下文文本（project-info 摘要 + 共享知识三级 + 成员文档）。",
+        "operationId": "knowledge_context",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "agent_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Agent Type"
+            }
+          },
+          {
+            "name": "issue_num",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Issue Num"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "A2AHandoffBody": {
+        "properties": {
+          "agent": {
+            "type": "string",
+            "title": "Agent",
+            "default": ""
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "A2AHandoffBody"
+      },
+      "AdvancedOptionsRequest": {
+        "properties": {
+          "work_branch": {
+            "type": "string",
+            "title": "Work Branch",
+            "default": "main"
+          },
+          "custom_fields": {
+            "items": {},
+            "type": "array",
+            "title": "Custom Fields",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "AdvancedOptionsRequest"
+      },
+      "AgentConfig": {
+        "properties": {
+          "backend": {
+            "type": "string",
+            "title": "Backend",
+            "default": ""
+          },
+          "backends": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backends"
+          },
+          "skill": {
+            "type": "string",
+            "title": "Skill",
+            "default": ""
+          },
+          "skill_id": {
+            "type": "integer",
+            "title": "Skill Id",
+            "default": 0
+          },
+          "skill_scope": {
+            "type": "string",
+            "title": "Skill Scope",
+            "default": ""
+          },
+          "enable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable"
+          },
+          "subscribe_events": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscribe Events"
+          },
+          "im_app_id": {
+            "type": "string",
+            "title": "Im App Id",
+            "default": ""
+          },
+          "im_app_secret": {
+            "type": "string",
+            "title": "Im App Secret",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "AgentConfig"
+      },
+      "AliasBody": {
+        "properties": {
+          "alias": {
+            "type": "string",
+            "title": "Alias",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "AliasBody"
+      },
+      "ApplySceneRequest": {
+        "properties": {
+          "scene_id": {
+            "type": "string",
+            "title": "Scene Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scene_id"
+        ],
+        "title": "ApplySceneRequest"
+      },
+      "Body_upload_knowledge_api_knowledge_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "repo": {
+            "type": "string",
+            "title": "Repo",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "project"
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_knowledge_api_knowledge_post"
+      },
+      "Body_upload_scene_icon_api_scenes_market_icon_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_scene_icon_api_scenes_market_icon_upload_post"
+      },
+      "Body_upload_skill_api_skills_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "user"
+          },
+          "repo": {
+            "type": "string",
+            "title": "Repo",
+            "default": ""
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_skill_api_skills_upload_post"
+      },
+      "BotTokenBody": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "bot_token": {
+            "type": "string",
+            "title": "Bot Token",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "BotTokenBody"
+      },
+      "CancelBody": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "CancelBody"
+      },
+      "ChatMessage": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          },
+          "conversation_id": {
+            "type": "string",
+            "title": "Conversation Id",
+            "default": ""
+          },
+          "image_data": {
+            "type": "string",
+            "title": "Image Data",
+            "default": ""
+          },
+          "video_data": {
+            "type": "string",
+            "title": "Video Data",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatMessage"
+      },
+      "CommentBody": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "CommentBody"
+      },
+      "CompleteBody": {
+        "properties": {
+          "result_text": {
+            "type": "string",
+            "title": "Result Text",
+            "default": ""
+          },
+          "exit_code": {
+            "type": "integer",
+            "title": "Exit Code",
+            "default": 0
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "default": ""
+          },
+          "work_dir": {
+            "type": "string",
+            "title": "Work Dir",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "CompleteBody"
+      },
+      "ConversationMessage": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ConversationMessage"
+      },
+      "ConvertSkillRequest": {
+        "properties": {
+          "skill_name": {
+            "type": "string",
+            "title": "Skill Name"
+          },
+          "repo": {
+            "type": "string",
+            "title": "Repo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "skill_name",
+          "repo"
+        ],
+        "title": "ConvertSkillRequest"
+      },
+      "CreateBranchRequest": {
+        "properties": {
+          "branch_name": {
+            "type": "string",
+            "title": "Branch Name"
+          },
+          "refs": {
+            "type": "string",
+            "title": "Refs",
+            "default": "main"
+          }
+        },
+        "type": "object",
+        "required": [
+          "branch_name"
+        ],
+        "title": "CreateBranchRequest"
+      },
+      "CreateEnvBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "grape_server": {
+            "type": "string",
+            "title": "Grape Server",
+            "default": ""
+          },
+          "grape_token": {
+            "type": "string",
+            "title": "Grape Token",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateEnvBody"
+      },
+      "CreateMarketSceneRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "repo"
+          },
+          "nodes": {
+            "items": {},
+            "type": "array",
+            "title": "Nodes",
+            "default": []
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "default": ""
+          },
+          "obs_icon_key": {
+            "type": "string",
+            "title": "Obs Icon Key",
+            "default": ""
+          },
+          "file_id": {
+            "type": "integer",
+            "title": "File Id",
+            "default": 0
+          },
+          "category_id": {
+            "type": "integer",
+            "title": "Category Id",
+            "default": 1
+          },
+          "recommended_template": {
+            "type": "string",
+            "title": "Recommended Template",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateMarketSceneRequest"
+      },
+      "CreateRepoBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "private": {
+            "type": "boolean",
+            "title": "Private",
+            "default": false
+          },
+          "visibility": {
+            "type": "string",
+            "title": "Visibility",
+            "default": ""
+          },
+          "auto_init": {
+            "type": "boolean",
+            "title": "Auto Init",
+            "default": true
+          },
+          "default_branch": {
+            "type": "string",
+            "title": "Default Branch",
+            "default": "main"
+          },
+          "org": {
+            "type": "string",
+            "title": "Org",
+            "default": ""
+          },
+          "host_after_create": {
+            "type": "boolean",
+            "title": "Host After Create",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateRepoBody"
+      },
+      "CreateSceneRequest": {
+        "properties": {
+          "scene_id": {
+            "type": "string",
+            "title": "Scene Id",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "repo"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/SceneNodeInput"
+            },
+            "type": "array",
+            "title": "Nodes",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CreateSceneRequest"
+      },
+      "CreateTemplateRequest": {
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "title": "Template Id"
+          },
+          "repo_name": {
+            "type": "string",
+            "title": "Repo Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "title": "CreateTemplateRequest"
+      },
+      "CredScopeBody": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "user"
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "CredScopeBody"
+      },
+      "DeployUrlBody": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "deploy_url": {
+            "type": "string",
+            "title": "Deploy Url",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "DeployUrlBody"
+      },
+      "EngineTagBody": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "EngineTagBody"
+      },
+      "EngineTagUpdateBody": {
+        "properties": {
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "default": 50
+          },
+          "enabled": {
+            "type": "integer",
+            "title": "Enabled",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "title": "EngineTagUpdateBody"
+      },
+      "EnsureIssueConvBody": {
+        "properties": {
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key"
+          },
+          "issue_number": {
+            "type": "integer",
+            "title": "Issue Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "repo_key",
+          "issue_number"
+        ],
+        "title": "EnsureIssueConvBody"
+      },
+      "EventActionFilterBody": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "allow": {
+            "type": "integer",
+            "title": "Allow",
+            "default": 0
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "default": "any"
+          },
+          "require_changes": {
+            "type": "string",
+            "title": "Require Changes",
+            "default": ""
+          },
+          "block_changes": {
+            "type": "string",
+            "title": "Block Changes",
+            "default": ""
+          },
+          "handle_side_effect": {
+            "type": "string",
+            "title": "Handle Side Effect",
+            "default": ""
+          },
+          "priority": {
+            "type": "integer",
+            "title": "Priority",
+            "default": 0
+          },
+          "enabled": {
+            "type": "integer",
+            "title": "Enabled",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_type",
+          "action"
+        ],
+        "title": "EventActionFilterBody"
+      },
+      "EventActionFilterUpdateBody": {
+        "properties": {
+          "allow": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "require_changes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Require Changes"
+          },
+          "block_changes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Changes"
+          },
+          "handle_side_effect": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handle Side Effect"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "title": "EventActionFilterUpdateBody"
+      },
+      "ExecModeBody": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "ExecModeBody"
+      },
+      "FailBody": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "default": ""
+          },
+          "failure_reason": {
+            "type": "string",
+            "title": "Failure Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "FailBody"
+      },
+      "FeedbackBody": {
+        "properties": {
+          "seq": {
+            "type": "integer",
+            "title": "Seq"
+          },
+          "feedback_type": {
+            "type": "string",
+            "title": "Feedback Type",
+            "default": "create_issue"
+          },
+          "comment": {
+            "type": "string",
+            "title": "Comment",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "seq"
+        ],
+        "title": "FeedbackBody"
+      },
+      "FlowResetBody": {
+        "properties": {
+          "to_stage": {
+            "type": "string",
+            "title": "To Stage",
+            "default": "vod"
+          }
+        },
+        "type": "object",
+        "title": "FlowResetBody"
+      },
+      "GitCodeRepoConfig": {
+        "properties": {
+          "bot_token": {
+            "type": "string",
+            "title": "Bot Token",
+            "default": ""
+          },
+          "bot_username": {
+            "type": "string",
+            "title": "Bot Username",
+            "default": "devops-bot"
+          }
+        },
+        "type": "object",
+        "title": "GitCodeRepoConfig"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeartbeatBody": {
+        "properties": {
+          "runtime_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Runtime Ids",
+            "default": []
+          },
+          "cpu_percent": {
+            "type": "number",
+            "title": "Cpu Percent",
+            "default": 0.0
+          },
+          "memory_percent": {
+            "type": "number",
+            "title": "Memory Percent",
+            "default": 0.0
+          },
+          "disk_percent": {
+            "type": "number",
+            "title": "Disk Percent",
+            "default": 0.0
+          },
+          "tmp_percent": {
+            "type": "number",
+            "title": "Tmp Percent",
+            "default": 0.0
+          },
+          "load_avg": {
+            "type": "string",
+            "title": "Load Avg",
+            "default": ""
+          },
+          "log_lines": {
+            "items": {
+              "$ref": "#/components/schemas/LogLineBody"
+            },
+            "type": "array",
+            "title": "Log Lines",
+            "default": []
+          },
+          "probe_results": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Probe Results",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "title": "HeartbeatBody"
+      },
+      "IssueCreateBody": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
+            "default": ""
+          },
+          "assignee": {
+            "type": "string",
+            "title": "Assignee",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "IssueCreateBody"
+      },
+      "IssueUpdateBody": {
+        "properties": {
+          "labels": {
+            "type": "string",
+            "title": "Labels",
+            "default": ""
+          },
+          "assignee": {
+            "type": "string",
+            "title": "Assignee",
+            "default": ""
+          },
+          "milestone_id": {
+            "type": "integer",
+            "title": "Milestone Id",
+            "default": 0
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "IssueUpdateBody"
+      },
+      "KnowledgeBody": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "issue"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "default": ""
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "accepted"
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeBody"
+      },
+      "LabelCreateBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color",
+            "default": "#d73a4a"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "LabelCreateBody"
+      },
+      "LogLineBody": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "title": "Ts",
+            "default": ""
+          },
+          "level": {
+            "type": "string",
+            "title": "Level",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "LogLineBody"
+      },
+      "MaxConcurrentBody": {
+        "properties": {
+          "max_concurrent": {
+            "type": "integer",
+            "title": "Max Concurrent",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "title": "MaxConcurrentBody"
+      },
+      "MessagesBody": {
+        "properties": {
+          "messages": {
+            "items": {},
+            "type": "array",
+            "title": "Messages",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "MessagesBody"
+      },
+      "NewConversationBody": {
+        "properties": {
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "NewConversationBody"
+      },
+      "NotificationPrefs": {
+        "properties": {
+          "issues": {
+            "type": "boolean",
+            "title": "Issues",
+            "default": true
+          },
+          "pr": {
+            "type": "boolean",
+            "title": "Pr",
+            "default": true
+          },
+          "build": {
+            "type": "boolean",
+            "title": "Build",
+            "default": false
+          },
+          "release": {
+            "type": "boolean",
+            "title": "Release",
+            "default": true
+          },
+          "vod": {
+            "type": "boolean",
+            "title": "Vod",
+            "default": false
+          },
+          "notifications_enabled": {
+            "type": "boolean",
+            "title": "Notifications Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "NotificationPrefs"
+      },
+      "OAuthConfig": {
+        "properties": {
+          "gitcode_oauth_client_id": {
+            "type": "string",
+            "title": "Gitcode Oauth Client Id",
+            "default": ""
+          },
+          "gitcode_oauth_client_secret": {
+            "type": "string",
+            "title": "Gitcode Oauth Client Secret",
+            "default": ""
+          },
+          "gitcode_oauth_redirect_uri": {
+            "type": "string",
+            "title": "Gitcode Oauth Redirect Uri",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "OAuthConfig"
+      },
+      "PRCreateBody": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "head": {
+            "type": "string",
+            "title": "Head",
+            "default": ""
+          },
+          "base": {
+            "type": "string",
+            "title": "Base",
+            "default": ""
+          },
+          "inner_issue_nums": {
+            "type": "string",
+            "title": "Inner Issue Nums",
+            "default": ""
+          },
+          "close_related_issue": {
+            "type": "boolean",
+            "title": "Close Related Issue",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "PRCreateBody"
+      },
+      "PRUpdateBody": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
+            "default": ""
+          },
+          "labels": {
+            "type": "string",
+            "title": "Labels",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "PRUpdateBody"
+      },
+      "PasswordLogin": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "PasswordLogin"
+      },
+      "ProgressBody": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "step": {
+            "type": "integer",
+            "title": "Step",
+            "default": 0
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ProgressBody"
+      },
+      "RepoAction": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name"
+        ],
+        "title": "RepoAction"
+      },
+      "RuntimeClaimBody": {
+        "properties": {
+          "supports_obs_url": {
+            "type": "boolean",
+            "title": "Supports Obs Url",
+            "default": false
+          },
+          "prefer_fallback": {
+            "type": "boolean",
+            "title": "Prefer Fallback",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "RuntimeClaimBody",
+        "description": "v3.0：worker 能力动态声明（零落库）——claim 每次携带"
+      },
+      "RuntimeCredBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": "user"
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RuntimeCredBody"
+      },
+      "RuntimeRegBody": {
+        "properties": {
+          "device_name": {
+            "type": "string",
+            "title": "Device Name",
+            "default": ""
+          },
+          "cli_version": {
+            "type": "string",
+            "title": "Cli Version",
+            "default": ""
+          },
+          "runtimes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Runtimes",
+            "default": []
+          },
+          "local_skills": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Local Skills",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "RuntimeRegBody"
+      },
+      "SceneNodeInput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag",
+            "default": ""
+          },
+          "skill": {
+            "type": "string",
+            "title": "Skill",
+            "default": ""
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode",
+            "default": "emit"
+          },
+          "next": {
+            "type": "string",
+            "title": "Next",
+            "default": "done"
+          },
+          "handoff": {
+            "type": "string",
+            "title": "Handoff",
+            "default": "a2a"
+          },
+          "skip": {
+            "items": {},
+            "type": "array",
+            "title": "Skip",
+            "default": []
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "engine_runtime_ids": {
+            "items": {},
+            "type": "array",
+            "title": "Engine Runtime Ids",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "SceneNodeInput"
+      },
+      "SceneTagsBody": {
+        "properties": {
+          "scene_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scene Tags",
+            "default": [
+              "default"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SceneTagsBody"
+      },
+      "StartBody": {
+        "properties": {
+          "bot_type": {
+            "type": "string",
+            "title": "Bot Type",
+            "default": "chat_bot"
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "StartBody"
+      },
+      "TaskClarifyBody": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "TaskClarifyBody"
+      },
+      "TaskCloseBody": {
+        "properties": {
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          },
+          "issue_number": {
+            "type": "integer",
+            "title": "Issue Number",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "TaskCloseBody"
+      },
+      "TaskCreateBody": {
+        "properties": {
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "assignee": {
+            "type": "string",
+            "title": "Assignee",
+            "default": ""
+          },
+          "scene_id": {
+            "type": "string",
+            "title": "Scene Id",
+            "default": ""
+          },
+          "is_subtask_mode": {
+            "type": "integer",
+            "title": "Is Subtask Mode",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "TaskCreateBody"
+      },
+      "TaskNotifyBody": {
+        "properties": {
+          "assignee": {
+            "type": "string",
+            "title": "Assignee",
+            "default": ""
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          },
+          "issue_number": {
+            "type": "integer",
+            "title": "Issue Number",
+            "default": 0
+          },
+          "task_description": {
+            "type": "string",
+            "title": "Task Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "TaskNotifyBody"
+      },
+      "TaskSelfCompleteBody": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id",
+            "default": ""
+          },
+          "result_text": {
+            "type": "string",
+            "title": "Result Text",
+            "default": ""
+          },
+          "next_step": {
+            "type": "string",
+            "title": "Next Step",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "TaskSelfCompleteBody"
+      },
+      "TaskStatusBody": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "TaskStatusBody"
+      },
+      "UpdateCredentials": {
+        "properties": {
+          "huawei_cloud_ak": {
+            "type": "string",
+            "title": "Huawei Cloud Ak",
+            "default": ""
+          },
+          "huawei_cloud_sk": {
+            "type": "string",
+            "title": "Huawei Cloud Sk",
+            "default": ""
+          },
+          "codearts_ak": {
+            "type": "string",
+            "title": "Codearts Ak",
+            "default": ""
+          },
+          "codearts_sk": {
+            "type": "string",
+            "title": "Codearts Sk",
+            "default": ""
+          },
+          "repo_key": {
+            "type": "string",
+            "title": "Repo Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "UpdateCredentials"
+      },
+      "UpdateMarketSceneRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "nodes": {
+            "items": {},
+            "type": "array",
+            "title": "Nodes",
+            "default": []
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "default": ""
+          },
+          "obs_icon_key": {
+            "type": "string",
+            "title": "Obs Icon Key",
+            "default": ""
+          },
+          "file_id": {
+            "type": "integer",
+            "title": "File Id",
+            "default": 0
+          },
+          "category_id": {
+            "type": "integer",
+            "title": "Category Id",
+            "default": 0
+          },
+          "recommended_template": {
+            "type": "string",
+            "title": "Recommended Template",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "UpdateMarketSceneRequest"
+      },
+      "UpdateSceneRequest": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/SceneNodeInput"
+            },
+            "type": "array",
+            "title": "Nodes",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "UpdateSceneRequest"
+      },
+      "UsageBody": {
+        "properties": {
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": ""
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": ""
+          },
+          "input": {
+            "type": "integer",
+            "title": "Input",
+            "default": 0
+          },
+          "output": {
+            "type": "integer",
+            "title": "Output",
+            "default": 0
+          },
+          "cache": {
+            "type": "integer",
+            "title": "Cache",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "UsageBody"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer"
+      },
+      "privateKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "PRIVATE-TOKEN"
+      },
+      "accessToken": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "access_token"
+      }
+    }
+  }
+}

@@ -135,7 +135,11 @@ def refresh_cmd():
     cli._groups = build_groups(schema)
     cli._loaded = True
     cli.contract_version = str(schema.get("info", {}).get("version", ""))
-    click.echo(f"契约已刷新：v{schema.get('info', {}).get('version', '?')}（{len(schema.get('paths', {}))} 端点），组名见 `grape --help`")
+    from src.contracts import contract_source
+
+    src_info = contract_source()
+    src_note = f"（来源：{src_info['kind']} {src_info['detail']}）" if src_info.get("kind") else ""
+    click.echo(f"契约已刷新：v{schema.get('info', {}).get('version', '?')}（{len(schema.get('paths', {}))} 端点）{src_note}")
 
 
 @cli.command(name="commands")
