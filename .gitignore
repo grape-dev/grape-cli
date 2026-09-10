@@ -14,5 +14,8 @@ build/
 # 本地操作笔记，不入库
 get_gitcode_issue.md
 
+# 生产部署参考（含服务器凭据，严禁入库）
+DEPLOYMENT-REMOTE.md
+
 # 临时文件（issue 抓取等）
 temp/
