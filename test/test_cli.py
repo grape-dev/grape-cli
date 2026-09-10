@@ -31,6 +31,27 @@ def test_version(env):
     assert re.match(r"grape 0\.\d+\.\d+", res.output.strip())
 
 
+def test_version_short_flag(env):
+    res = CliRunner().invoke(cli, ["-v"])
+    assert res.exit_code == 0
+    assert re.match(r"grape 0\.\d+\.\d+", res.output.strip())
+
+
+def test_help_short_flag(env):
+    res = CliRunner().invoke(cli, ["-h"])
+    assert res.exit_code == 0
+    assert "Commands:" in res.output
+
+
+def test_help_categories(env, fake_httpx, standard_router):
+    fake_httpx(standard_router)
+    res = CliRunner().invoke(cli, ["--help"])
+    assert res.exit_code == 0
+    for cat in ("Work with tasks", "Work with repositories (git)",
+                "Skills & knowledge", "Explore the platform"):
+        assert cat in res.output
+
+
 def test_help_lists_builtins(env):
     res = CliRunner().invoke(cli, ["--help"])
     assert res.exit_code == 0

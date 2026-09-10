@@ -45,12 +45,51 @@ def wait_command() -> click.Command:
 class ContractGroup(click.Group):
     """加载 /openapi.json 动态生成命令组（方案 B）：新增契约 → 自动获得命令。"""
 
+    # ---- 帮助类别分组（借鉴 git 按意图分组）----
+    CATEGORY_MAP = {
+        "tasks": "Work with tasks",
+        "git": "Work with repositories (git)",
+        "git-repo": "Work with repositories (git)",
+        "skills": "Skills & knowledge",
+        "knowledge": "Skills & knowledge",
+    }
+    CATEGORY_ORDER = [
+        "Work with tasks",
+        "Work with repositories (git)",
+        "Skills & knowledge",
+        "Explore the platform",
+    ]
+    DEFAULT_CATEGORY = "Explore the platform"
+
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self._groups: dict = {}
         self._loaded = False
         self._load_error = ""
         self.contract_version = ""
+
+    def format_commands(self, ctx, formatter):
+        """按类别渲染 Commands，便于 agent/人扫读。"""
+        rows_by_cat: dict[str, list] = {}
+        for name in self.list_commands(ctx):
+            cmd = self.get_command(ctx, name)
+            if cmd is None or getattr(cmd, "hidden", False):
+                continue
+            cat = self.CATEGORY_MAP.get(name, self.DEFAULT_CATEGORY)
+            rows_by_cat.setdefault(cat, []).append((name, cmd))
+        if not rows_by_cat:
+            return
+        with formatter.section("Commands"):
+            for cat in self.CATEGORY_ORDER:
+                items = rows_by_cat.get(cat)
+                if not items:
+                    continue
+                max_name = max(len(n) for n, _ in items)
+                limit = formatter.width - 10 - max_name
+                rows = [(n, c.get_short_help_str(limit)) for n, c in items]
+                formatter.write_text(f"{cat}:")
+                formatter.write_dl(rows)
+                formatter.write_paragraph()
 
     def _ensure(self, refresh: bool = False):
         if self._loaded and not refresh:
@@ -90,8 +129,9 @@ class ContractGroup(click.Group):
         return sorted(set(cmds))
 
 
-@click.group(cls=ContractGroup, invoke_without_command=True)
-@click.version_option(__version__, "--version", prog_name="grape",
+@click.group(cls=ContractGroup, invoke_without_command=True,
+             context_settings=dict(help_option_names=["-h", "--help"]))
+@click.version_option(__version__, "--version", "-v", prog_name="grape",
                       message="%(prog)s %(version)s")
 @click.option("--base-url", default=None, help="server base URL (one-shot, highest priority)")
 @click.option("--token", "--grape-api-token", "--grape_api_token", default=None,

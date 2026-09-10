@@ -81,6 +81,19 @@ def test_group_help_derives_verb_meanings(sample_schema):
     assert "List issues" in sub.help
 
 
+def test_git_repo_group_has_platform_api_intro(sample_schema):
+    groups = build_groups(sample_schema)
+    git_grp = groups["git-repo"]
+    assert git_grp.help.startswith("Platform API by grape")
+    assert "no extra token setup" in git_grp.help.lower()
+
+
+def test_contract_group_accepts_short_help_flag(sample_schema):
+    groups = build_groups(sample_schema)
+    ctx = {"help_option_names": groups["tasks"].context_settings.get("help_option_names")}
+    assert "-h" in groups["tasks"].context_settings["help_option_names"]
+
+
 def test_en_summary_overlay_falls_back_to_contract(sample_schema):
     # 覆盖层未收录的 operationId 回落契约 summary
     op = {"operationId": "custom_thing", "summary": "Do a custom thing"}

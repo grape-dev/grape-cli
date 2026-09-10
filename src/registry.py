@@ -16,6 +16,15 @@ from src.client import ApiClient, CliError
 
 GROUP_ALIAS = {"gitrepo": "git-repo"}
 
+# 组的固定引导行（首行=短帮助；帮助 agent 区分 demo 组语义）
+_GROUP_INTRO = {
+    "git-repo": (
+        "Platform API by grape (gitcode / github / gitlab): branches, issues, "
+        "PRs, comments, merge & review, checks. No extra token setup - "
+        "use the grape session token."
+    ),
+}
+
 _EN_SUMMARIES: dict = {}
 
 
@@ -140,7 +149,7 @@ def _is_meta(v) -> bool:
 
 
 def _materialize(subtree: dict, name: str) -> click.Group:
-    """按子命令摘要聚合出一行“实际含义”，作为组帮助首行（方便 agent 快速理解）。"""
+    """按子命令摘要聚合出“实际含义”，作为组帮助首行（方便 agent 快速理解）。"""
     meaning = []
     for key, val in sorted(subtree.items()):
         if _is_meta(val):
@@ -148,13 +157,21 @@ def _materialize(subtree: dict, name: str) -> click.Group:
             meaning.append(f"{key}: {s}" if s else key)
         else:
             meaning.append(key)
-    help_text = "\n".join([
+    lines = []
+    intro = _GROUP_INTRO.get(name)
+    if intro:
+        lines += [intro, ""]
+    lines += [
         ", ".join(meaning),
         "",
         f"Contract-driven group under group '{name}' "
         "(auto-generated from the OpenAPI contract by operationId).",
-    ])
-    grp = click.Group(name=name, help=help_text)
+    ]
+    grp = click.Group(
+        name=name,
+        help="\n".join(lines),
+        context_settings=dict(help_option_names=["-h", "--help"]),
+    )
     for key, val in sorted(subtree.items()):
         if _is_meta(val):
             cmd = build_command(val)
