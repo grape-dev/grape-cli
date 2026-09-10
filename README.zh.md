@@ -108,15 +108,18 @@ grape git-repo issues list --owner o --repo r --state open --json-out
 
 ### git（本地执行，token 零暴露）
 
-`grape git` 是 **git 原生命令透传**：token 只在 CLI 进程内经 `/git-credential` 获取，
-经 git 的 `GIT_CONFIG` env 注入——**不进命令行、不落磁盘、agent 感知不到**。
+`grape git` 是 **git 原生命令透传**。它自动识别仓库——`clone` 从 URL 参数解析，其余从
+当前目录的 `remote.origin.url` 解析——再把会话 token 换券成短期平台凭据，经 `GIT_CONFIG`
+env 注入 git 子进程：**不进命令行、不落磁盘、agent 感知不到**。仅 gitcode.com 宿主注入；
+换券失败仅告警、git 按本机原生行为执行。`grape git --help` 与 `git --help` 一致。
 
 ```bash
-grape git --repo owner/repo status
-grape git --repo owner/repo checkout -b feat/issue-7
-grape git --repo owner/repo commit -m "fix: ..."
-grape git --repo owner/repo push feat/issue-7
-grape git status                # 不指定 --repo：在当前目录直接执行 git
+grape git status                                   # 本地命令（无需凭据）
+grape git clone https://gitcode.com/owner/repo.git # 从 URL 识别仓库 → 注入凭据
+grape git pull
+grape git push
+grape git checkout -b feat/issue-7
+grape git commit -m "fix: ..."
 ```
 
 ### api（通用兜底）

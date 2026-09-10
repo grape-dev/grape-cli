@@ -1,6 +1,6 @@
 # 设计方案：`grape git` 裸用自动识别仓库 + 免凭据注入（方案 B）
 
-> 状态：待实施（仅方案，未改代码）
+> 状态：✅ 已实施（2026-09-09，含测试）
 > 关联：Issue-45 方案③ / `grape git` 透传
 > 设计意图：全新 worker 只靠环境注入的 `GRAPE_SESSION_TOKEN`，即可让
 > `grape git xx` 生效——不配置 git config、SSH key、本地 GitCode token 也不用。
@@ -32,10 +32,11 @@ grape git <args>
   ├─ 识别 owner/repo
   │    ├─ clone：解析第一个参数 URL 中的 owner/repo（此时 cwd 尚无 .git）
   │    └─ 其他：git config --get remote.origin.url（子目录亦可）
+  │         ├─ help/--help/-h：纯透传，跳过识别与注入
   │
   ├─ host 白名单（仅 gitcode.com）→ 才继续；否则零注入透传
   │
-  ├─ 调 /workspace（不再使用其 cwd）+ /git-credential → http.extraheader 注入
+  ├─ 调 /git-credential 换券 → http.extraheader 注入（不再调用 /workspace，cwd 保持当前目录）
   │    └─ 失败降级：无 token / 服务端不可达 → stderr 警告，不阻塞本地命令
   │
   ├─（可选）缺 user.name/email → 从会话用户派生注入（GIT_CONFIG env）
@@ -71,12 +72,14 @@ github / gitlab / 其他 host **一律不注入**，防止 `http.extraheader` �
 
 零注入，直接透传 git（行为等同 `git xx`，错误由 git 原生呈现）。
 
-## 五、身份注入（commit 可用）
+## 五、身份注入（commit 可用）—— 暂缓
 
-换券成功后，检查目标配置缺失时一并注入（经 `GIT_CONFIG_COUNT/KEY/VALUE` env，进程内不落盘）：
+换券成功后，检查目标配置缺失时可一并注入（经 `GIT_CONFIG_COUNT/KEY/VALUE` env，进程内不落盘）：
 
 - `user.name` / `user.email` ← 由会话用户 / 服务端 `/git-credential`（或新增字段）派生
-- 目的：`git commit` 在全新机器上免配置直接可用
+
+> ⚠️ 当前服务端 `/git-credential` 未返回用户身份字段，本项**未实现**，待服务端补充后启用。
+> 现在克隆成功后，全新机器的 `git commit` 仍需执行一次性 `git config user.name/email`。
 
 ## 六、降级与失败策略
 
@@ -94,15 +97,15 @@ github / gitlab / 其他 host **一律不注入**，防止 `http.extraheader` �
 - 凭据只在子进程 env，不落 `.git/config`、不落 `~/.git-credentials`、不进命令行
 - 不修改用户全局 git config（`GIT_CONFIG_COUNT` 只对本进程生效）
 
-## 八、改动清单（实施时）
+## 八、改动清单（实施完成）
 
 | 项 | 文件 | 动作 |
 |----|------|------|
-| 1 | `src/commands/git.py` | 删 `--repo`；新增 `_repo_from_url()` / `_repo_from_cwd()` / `_allow_host()`；注入失败 try/except 降级；可选身份注入 |
-| 2 | `src/commands/git.py` docstring | 更新为"裸用自动识别 + 免凭据"语义 |
-| 3 | `test/test_git.py` | `--repo` 用例改为：临时仓库配 origin 验证自动注入；clone 由 URL 解析注入 |
-| 4 | README.md / README.zh.md | git 章节示例改为 `grape git status` / `push` / `clone https://...`，去掉 `--repo` |
-| 5 | `docs/issue-1-production-issues.md` | （如涉及）同步示例 |
+| 1 | `src/commands/git.py` | ✅ 删 `--repo`；新增 `_repo_from_url()` / `_repo_from_cwd()` / `_repo_from_args()` / `_inject_git_credentials()`；`add_help_option=False`；注入失败 try/except 降级；help/--help/-h 纯透传；不再调用 `/workspace` 与切换 cwd |
+| 2 | `src/commands/git.py` docstring | ✅ 更新为"裸用自动识别 + 免凭据"语义 |
+| 3 | `test/test_git.py` | ✅ 新增 18 个用例：URL 解析（https/scp/ssh/非gitcode）、cwd 真实仓库识别、clone/push 注入、无 repo 不注入、help 透传、凭据缺字段/服务端不可达降级、git 退出码、env 偏移 |
+| 4 | README.md / README.zh.md | ✅ git 章节改为裸用示例，去掉 `--repo` |
+| 5 | 身份注入 | ⏳ 待服务端返回用户身份字段后启用 |
 
 ## 九、验证
 

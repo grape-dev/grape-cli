@@ -109,16 +109,20 @@ grape git-repo issues list --owner o --repo r --state open --json-out
 
 ### git (local execution, zero token exposure)
 
-`grape git` is a **native git passthrough**: the token is fetched in-process via
-`/git-credential` and injected with `GIT_CONFIG` env vars — never on the command line,
-never written to disk, invisible to the agent.
+`grape git` is a **native git passthrough**. It auto-detects the repo — from the
+`clone` URL argument, or from the current directory's `remote.origin.url` — exchanges
+the session token for a short-lived platform credential in-process, and injects it via
+`GIT_CONFIG` env vars: **never on the command line, never written to disk, invisible to
+the agent**. Only gitcode.com hosts get credentials; on an exchange failure you get a
+warning and git runs natively. `grape git --help` is identical to `git --help`.
 
 ```bash
-grape git --repo owner/repo status
-grape git --repo owner/repo checkout -b feat/issue-7
-grape git --repo owner/repo commit -m "fix: ..."
-grape git --repo owner/repo push feat/issue-7
-grape git status                # without --repo: run git in the current directory
+grape git status                                   # local command (no credential needed)
+grape git clone https://gitcode.com/owner/repo.git # repo from URL → credential injected
+grape git pull
+grape git push
+grape git checkout -b feat/issue-7
+grape git commit -m "fix: ..."
 ```
 
 ### api (generic fallback)
