@@ -5,14 +5,41 @@
 - query/path 参数 → `--<name>`；requestBody → `--json '<body>'`；`--json-out` 机器可读输出。
 - security 进契约 → 自动携带认证头（ApiClient 统一）。
 - **新增 OpenAPI 接口 → 重建契约 → CLI 自动获得命令，零 CLI 源码改动**（R7）。
+- 帮助语义：优先 `src/data/openapi.en.json` 的 operationId → 英文含义，回退契约 summary。
 """
 import json
+from importlib.resources import files
 
 import click
 
 from src.client import ApiClient, CliError
 
 GROUP_ALIAS = {"gitrepo": "git-repo"}
+
+_EN_SUMMARIES: dict = {}
+
+
+def _load_en_summaries() -> dict:
+    """惰性加载 operationId → 英文含义覆盖层（进程内缓存）。"""
+    global _EN_SUMMARIES
+    if not _EN_SUMMARIES:
+        try:
+            _EN_SUMMARIES = json.loads(
+                files("src").joinpath("data", "openapi.en.json").read_text(encoding="utf-8")
+            )
+        except Exception:
+            _EN_SUMMARIES = {}
+    return _EN_SUMMARIES
+
+
+def _en_summary(op: dict) -> str:
+    """帮助用英文含义：英文覆盖层 > 契约 summary > 空。"""
+    oid = op.get("operationId") or ""
+    if oid:
+        en = _load_en_summaries().get(oid)
+        if en:
+            return en
+    return (op.get("summary") or "").strip()
 
 
 def group_name(g: str) -> str:
@@ -49,11 +76,11 @@ def build_command(meta: dict) -> click.Command:
     query_params = _params_by_in(op, "query")
     has_body = "requestBody" in op
 
-    options = [click.Option([f"--{n}"], default=None, help=f"参数 {n}") for n in path_params]
-    options += [click.Option([f"--{n}"], default=None, help=f"参数 {n}") for n in query_params]
+    options = [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in path_params]
+    options += [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in query_params]
     if has_body:
-        options.append(click.Option(["--json"], default=None, help="JSON 字符串请求体"))
-    options.append(click.Option(["--json-out"], is_flag=True, help="机器可读 JSON 输出"))
+        options.append(click.Option(["--json"], default=None, help="JSON string request body"))
+    options.append(click.Option(["--json-out"], is_flag=True, help="machine-readable JSON output"))
 
     def _run(**kw):
         api = ApiClient()
@@ -61,7 +88,7 @@ def build_command(meta: dict) -> click.Command:
         for name in path_params:
             v = kw.get(name)
             if v is None:
-                raise CliError(f"缺少必填参数 --{name}")
+                raise CliError(f"Missing required parameter --{name}")
             url = url.replace("{" + name + "}", str(v))
         params = {n: kw.get(n) for n in query_params if kw.get(n) is not None}
         body = None
@@ -70,18 +97,22 @@ def build_command(meta: dict) -> click.Command:
             try:
                 body = json.loads(raw)
             except Exception:
-                raise CliError("--json 不是合法 JSON 字符串")
+                raise CliError("--json is not a valid JSON string")
         _status, data = api.request(method, url, params=params, json_body=body)
         click.echo(json.dumps(data, ensure_ascii=False,
                               indent=None if kw.get("json_out") else 2))
 
-    summary = (op.get("summary") or "").strip()
+    summary = _en_summary(op)
     desc = (op.get("description") or "").strip()
-    help_text = f"Invoke grape API: {method} {path}"
-    if summary:
-        help_text += f"\n\nSummary: {summary}"
+    # 描述仅保留 ASCII（契约描述多为中文，帮助统一英文）
+    if desc and not desc.isascii():
+        desc = ""
+    method_path = f"Invoke grape API: {method} {path}"
+    # 首行=实际含义（短帮助/命令列表直接展示），其后附链路信息
+    help_lines = [summary or f"{method} {path}", "", method_path]
     if desc and desc != summary:
-        help_text += f"\n\n{desc}"
+        help_lines += ["", desc]
+    help_text = "\n".join(help_lines)
     return click.Command(name="", callback=_run, params=options, help=help_text)
 
 
@@ -109,7 +140,21 @@ def _is_meta(v) -> bool:
 
 
 def _materialize(subtree: dict, name: str) -> click.Group:
-    grp = click.Group(name=name, help=f"Contract-driven commands under group '{name}'.")
+    """按子命令摘要聚合出一行“实际含义”，作为组帮助首行（方便 agent 快速理解）。"""
+    meaning = []
+    for key, val in sorted(subtree.items()):
+        if _is_meta(val):
+            s = _en_summary(val["op"])
+            meaning.append(f"{key}: {s}" if s else key)
+        else:
+            meaning.append(key)
+    help_text = "\n".join([
+        ", ".join(meaning),
+        "",
+        f"Contract-driven group under group '{name}' "
+        "(auto-generated from the OpenAPI contract by operationId).",
+    ])
+    grp = click.Group(name=name, help=help_text)
     for key, val in sorted(subtree.items()):
         if _is_meta(val):
             cmd = build_command(val)

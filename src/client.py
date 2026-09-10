@@ -19,7 +19,10 @@ class ApiClient:
         self.channel = channel  # bearer / PRIVATE-TOKEN / access_token
         self.timeout = int(timeout or 0) or config.cli_timeout()
         if not self.token:
-            raise CliError("缺少 token：请设置 GRAPE_SESSION_TOKEN（任务级）/ GRAPE_API_TOKEN（用户级），或 ~/.grape/config.json 的 token")
+            raise CliError(
+                "Missing token: set GRAPE_SESSION_TOKEN (task) / GRAPE_API_TOKEN (user), "
+                "or the 'token' field in ~/.grape/config.json"
+            )
 
     def _headers(self, extra: dict | None = None) -> dict:
         h = {"Accept": "application/json"}
@@ -43,20 +46,23 @@ class ApiClient:
                               headers=self._headers(), json=json_body or None,
                               timeout=self.timeout)
         except httpx.ConnectError as e:
-            raise CliError(f"base_url 不可达：{self.base_url}（{e}）")
+            raise CliError(f"base_url unreachable: {self.base_url} ({e})")
         except httpx.TimeoutException as e:
-            raise CliError(f"请求超时（>{self.timeout}s，可用 --timeout 加大）：{self.base_url}{path}")
+            raise CliError(
+                f"request timeout (> {self.timeout}s; increase with --timeout): "
+                f"{self.base_url}{path}"
+            )
         except httpx.HTTPError as e:
-            raise CliError(f"HTTP 错误：{self.base_url}{path}（{e}）")
+            raise CliError(f"HTTP error: {self.base_url}{path} ({e})")
         if r.status_code == 401:
-            raise CliError("认证失败：token 无效或已过期", code=401)
+            raise CliError("authentication failed: token invalid or expired", code=401)
         try:
             data = r.json()
         except Exception:
             data = r.text
         if r.status_code >= 400:
             msg = data.get("message") if isinstance(data, dict) else str(data)
-            raise CliError(f"HTTP {r.status_code}: {msg or '请求失败'}", code=r.status_code)
+            raise CliError(f"HTTP {r.status_code}: {msg or 'request failed'}", code=r.status_code)
         return r.status_code, data
 
 

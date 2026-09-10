@@ -56,7 +56,7 @@ def test_connect_error_maps_to_clierror(monkeypatch, fake_httpx):
         raise httpx.ConnectError("no route")
 
     fake_httpx({"/api/x": _conn_raises})
-    with pytest.raises(CliError, match="不可达"):
+    with pytest.raises(CliError, match="unreachable"):
         ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
 
 
@@ -65,7 +65,7 @@ def test_timeout_error_maps_to_clierror(monkeypatch, fake_httpx):
         raise httpx.TimeoutException("slow")
 
     fake_httpx({"/api/x": _timeout_raises})
-    with pytest.raises(CliError, match="超时"):
+    with pytest.raises(CliError, match="timeout"):
         ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
 
 

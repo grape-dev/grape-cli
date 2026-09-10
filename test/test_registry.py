@@ -1,6 +1,7 @@
 """契约 → 命令树：operationId 解析、分组、选项生成。"""
 from src.registry import (
     GROUP_ALIAS,
+    _en_summary,
     build_command,
     build_groups,
     command_tree,
@@ -56,3 +57,36 @@ def test_generated_command_options(sample_schema):
     expect = {"owner", "repo", "state", "json_out"}
     assert expect.issubset(opt_names)
     assert "json" not in opt_names  # 无 requestBody 时不生成 --json
+
+
+def test_generated_command_short_help_is_summary(sample_schema):
+    ops = parse_operations(sample_schema)
+    op = next(o for o in ops if o["operationId"] == "gitrepo_issues_list")
+    cmd = build_command(op)
+    short = cmd.get_short_help_str()
+    assert short.startswith("List issues")
+    assert "Invoke grape API: GET" in cmd.help
+
+
+def test_group_help_derives_verb_meanings(sample_schema):
+    groups = build_groups(sample_schema)
+    tasks = groups["tasks"]
+    assert "mine" in tasks.help
+    assert "My task list" in tasks.help
+    assert "create" in tasks.help
+
+    git_grp = groups["git-repo"]
+    sub = git_grp.commands["issues"]
+    assert "list" in sub.help
+    assert "List issues" in sub.help
+
+
+def test_en_summary_overlay_falls_back_to_contract(sample_schema):
+    # 覆盖层未收录的 operationId 回落契约 summary
+    op = {"operationId": "custom_thing", "summary": "Do a custom thing"}
+    assert _en_summary(op) == "Do a custom thing"
+
+
+def test_en_summary_overlay_preferred(monkeypatch):
+    op = {"operationId": "tasks_mine", "summary": "中文摘要"}
+    assert _en_summary(op) == "My task list"

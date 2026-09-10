@@ -46,7 +46,7 @@ def fetch_schema(base_url: str, token: str) -> dict:
     api = ApiClient(base_url=base_url, token=token)
     _, data = api.request("GET", "/openapi.json")
     if not isinstance(data, dict) or "paths" not in data:
-        raise CliError("openapi.json 契约格式异常")
+        raise CliError("openapi.json contract malformed (missing 'paths')")
     return data
 
 
@@ -88,7 +88,7 @@ def load_contract(base_url: str = "", token: str = "", refresh: bool = False) ->
         _ver = str(bundled.get("info", {}).get("version", ""))
         _last_source = {
             "kind": "bundled",
-            "detail": f"v{_ver}（远端不可达：{e}）",
+            "detail": f"v{_ver} (remote unreachable: {e})",
         }
         return bundled
 

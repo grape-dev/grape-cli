@@ -15,7 +15,7 @@ def api_command() -> click.Command:
     def api_cmd(method: str, path: str, data: str, json_out: bool):
         method = method.upper()
         if method not in ("GET", "POST", "PUT", "PATCH", "DELETE"):
-            raise click.ClickException(f"非法方法: {method}")
+            raise click.ClickException(f"invalid method: {method}")
         api = ApiClient()
         body = json.loads(data) if data else None
         _status, resp = api.request(method, path, json_body=body)

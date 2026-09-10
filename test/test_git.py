@@ -203,4 +203,4 @@ def test_git_credentials_unavailable_warns_and_continues(git_env, monkeypatch):
     monkeypatch.setattr("src.commands.git._repo_from_cwd", lambda cwd=None: "o/r")
     res = CliRunner().invoke(cli, ["git", "status"])
     assert res.exit_code == 0
-    assert "凭据注入失败" in (res.output + getattr(res, "stderr", ""))
+    assert "credential injection failed" in (res.output + getattr(res, "stderr", ""))

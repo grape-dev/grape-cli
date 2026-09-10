@@ -77,7 +77,7 @@ def test_remote_failure_falls_back_to_bundled(isolate_config, monkeypatch):
     assert "paths" in schema
     src_info = contracts.contract_source()
     assert src_info["kind"] == "bundled"
-    assert "远端不可达" in src_info["detail"]
+    assert "unreachable" in src_info["detail"]
 
 
 def test_remote_success_prefers_remote_over_bundled(isolate_config, monkeypatch, sample_schema):

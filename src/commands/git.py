@@ -84,7 +84,7 @@ def _inject_git_credentials(owner_repo: str, env: dict) -> None:
     password = cred.get("password")
     if not username or not password:
         raise CliError(
-            f"服务端 git-credential 响应缺少 username/password 字段（仓库 {owner_repo}）"
+            f"server git-credential response missing username/password (repo {owner_repo})"
         )
     idx = int(env.get("GIT_CONFIG_COUNT") or 0)
     env["GIT_CONFIG_COUNT"] = str(idx + 1)
@@ -102,7 +102,7 @@ def git_command() -> click.Command:
     @click.pass_context
     def git_cmd(ctx):
         if not shutil.which("git"):
-            raise click.ClickException("未找到 git 可执行文件")
+            raise click.ClickException("git executable not found")
 
         env = dict(os.environ)
         args = list(ctx.args)
@@ -114,7 +114,8 @@ def git_command() -> click.Command:
                     _inject_git_credentials(owner_repo, env)
                 except CliError as e:
                     click.echo(
-                        f"warning: grape git 凭据注入失败（{e}），按本机 git 原生行为执行",
+                        f"warning: grape git credential injection failed ({e}); "
+                        "falling back to native git behavior",
                         err=True,
                     )
 
@@ -125,7 +126,7 @@ def git_command() -> click.Command:
             # Ctrl+C 时 git 与 CLI 同控制组已收到中断；拉起主入口统一 130 收口
             raise
         except OSError as e:
-            raise click.ClickException(f"git 执行失败: {e}")
+            raise click.ClickException(f"git execution failed: {e}")
         sys.exit(r.returncode)
 
     return git_cmd

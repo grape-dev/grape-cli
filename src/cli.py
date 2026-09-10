@@ -35,7 +35,9 @@ def wait_command() -> click.Command:
         out = json.dumps(data, ensure_ascii=False, indent=None if json_out else 2)
         click.echo(out)
         if data.get("status") not in _terminal:
-            raise CliError(f"等待超时（>{timeout}s），当前状态 {st or '未知'}")
+            raise CliError(
+                f"wait timeout (> {timeout}s), current status {st or 'unknown'}"
+            )
 
     return _wait
 
@@ -117,7 +119,7 @@ def _tree_lines(pattern: str = "") -> list[str]:
     try:
         schema = load_contract()
     except Exception as e:
-        return [f"契约加载失败：{e}（检查 base_url/token 或 grape refresh）"]
+        return [f"contract load failed: {e} (check base_url/token or run grape refresh)"]
     lines = []
     for group, verbs in command_tree(schema).items():
         for v in verbs:
@@ -138,8 +140,11 @@ def refresh_cmd():
     from src.contracts import contract_source
 
     src_info = contract_source()
-    src_note = f"（来源：{src_info['kind']} {src_info['detail']}）" if src_info.get("kind") else ""
-    click.echo(f"契约已刷新：v{schema.get('info', {}).get('version', '?')}（{len(schema.get('paths', {}))} 端点）{src_note}")
+    src_note = f" (source: {src_info['kind']} {src_info['detail']})" if src_info.get("kind") else ""
+    click.echo(
+        f"contract refreshed: v{schema.get('info', {}).get('version', '?')} "
+        f"({len(schema.get('paths', {}))} endpoints){src_note}"
+    )
 
 
 @cli.command(name="commands")
@@ -150,7 +155,7 @@ def commands_cmd(pattern: str):
     for line in lines:
         click.echo(line)
     if not lines:
-        click.echo("未匹配到契约命令（grape refresh 或检查 base_url/token）")
+        click.echo("no contract commands matched (run grape refresh or check base_url/token)")
 
 
 api_cmd = api_command()
