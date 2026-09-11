@@ -8,6 +8,7 @@
 - 帮助语义：优先 `src/data/openapi.en.json` 的 operationId → 英文含义，回退契约 summary。
 """
 import json
+import re
 from importlib.resources import files
 
 import click
@@ -120,6 +121,25 @@ def _example_args(meta: dict, path_params: list[str], query_params: list[str],
     return " ".join(parts)
 
 
+def _validate_body(meta: dict, body, body_fields: list[str]) -> None:
+    """请求体未知字段守卫（通用）：可枚举 schema 时，--json 内键必须都在允许集内。
+
+    不支持的字段及时报错并列出允许字段，避免服务端 200 静默空转；服务端后续补字段后自动放行。
+    """
+    if not body_fields or not isinstance(body, dict):
+        return
+    allowed = set(body_fields)
+    unknown = sorted(set(body) - allowed)
+    if not unknown:
+        return
+    cmd_path = f"grape {meta['group']} {' '.join(meta['verb'])}"
+    raise CliError(
+        "unknown request field(s): " + ", ".join(unknown) + "\n"
+        f"allowed for {meta['method']} {meta['path']}: " + ", ".join(body_fields) + "\n"
+        f"see `{cmd_path} --help` for the JSON request schema"
+    )
+
+
 def build_command(meta: dict) -> click.Command:
     op, method, path = meta["op"], meta["method"], meta["path"]
     path_params = _params_by_in(op, "path")
@@ -148,6 +168,12 @@ def build_command(meta: dict) -> click.Command:
                 body = json.loads(raw)
             except Exception:
                 raise CliError("--json is not a valid JSON string")
+            if body_fields and not isinstance(body, dict):
+                raise CliError(
+                    f"--json must be a JSON object for this endpoint "
+                    f"(allowed fields: {', '.join(body_fields)})"
+                )
+            _validate_body(meta, body, body_fields)
         _status, data = api.request(method, url, params=params, json_body=body)
         click.echo(json.dumps(data, ensure_ascii=False,
                               indent=None if kw.get("json_out") else 2))
