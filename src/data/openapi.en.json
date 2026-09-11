@@ -39,7 +39,14 @@
   "tasks_status_get": "Query task status (for tasks wait)",
   "tasks_complete": "Mark task complete (grape tasks complete)",
   "tasks_mine": "My task list",
+  "tasks_notify": "Assign / notify a task",
+  "tasks_close": "Close tasks of an issue",
+  "tasks_clarifications": "Get task clarification history",
+  "tasks_clarify": "Reply to a task clarification",
   "knowledge_list": "Knowledge list (project + Agent scoped)",
   "knowledge_content": "Read full knowledge text",
-  "knowledge_context": "Merge injected context text"
+  "knowledge_context": "Merge injected context text",
+  "knowledge_detail": "Get knowledge detail",
+  "knowledge_stats": "Knowledge statistics",
+  "auth_profile_get": "Get current user profile"
 }

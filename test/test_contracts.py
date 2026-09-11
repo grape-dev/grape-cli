@@ -98,3 +98,24 @@ def test_bundled_fallback_does_not_write_cache(isolate_config, monkeypatch):
     contracts.load_contract()
     cached = [f for f in isolate_config.iterdir() if f.name.startswith("openapi-")]
     assert cached == []  # 快照只作兜底，不回写 ~/.grape 缓存，避免污染真实契约
+
+
+def test_bundled_contract_has_refreshed_task_endpoints():
+    """内置快照应包含文档化的任务接口（notify/close/clarify/clarifications）。"""
+    bundled = contracts.load_bundled()
+    ops = {
+        (p, m.lower()): o.get("operationId")
+        for p, ms in bundled["paths"].items()
+        for m, o in ms.items()
+        if isinstance(o, dict)
+    }
+    assert ops[("/api/tasks/notify", "post")] == "tasks_notify"
+    assert ops[("/api/tasks/close", "post")] == "tasks_close"
+    assert ops[("/api/tasks/{task_id}/clarifications", "get")] == "tasks_clarifications"
+    assert ops[("/api/tasks/{task_id}/clarify", "post")] == "tasks_clarify"
+    # 规范化的 operationId（服务端自动生成的丑名已改写）
+    all_ids = {oid for oid in ops.values() if oid}
+    assert "knowledge_detail" in all_ids
+    assert "auth_profile_get" in all_ids
+    mine_params = {p["name"] for p in bundled["paths"]["/api/tasks/mine"]["get"].get("parameters", [])}
+    assert {"status", "repo_key", "sort_order", "mode"} <= mine_params

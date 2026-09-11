@@ -5,6 +5,37 @@
     "version": "2.1.0"
   },
   "paths": {
+    "/api/auth/profile": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get Profile",
+        "description": "用户信息——支持 JWT 会话 / grape_ API Key / tk_ 会话 token（Issue #69）。",
+        "operationId": "auth_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
     "/api/repos/member": {
       "get": {
         "tags": [
@@ -2894,7 +2925,7 @@
           "tasks"
         ],
         "summary": "更新任务状态",
-        "description": "任务状态迁移（active → processing → completed / cancelled；cancelled → active 可恢复）。\n\n终端状态 completed 不可改；同一任务只能单向流转（按 _TASK_STATUS_FLOWS 校验）。",
+        "description": "任务状态迁移（Issue #85: active → processing → awaiting_input → pending_review → completed / cancelled）。\n\n终端状态 completed 不可改；同一任务只能单向流转（按 _TASK_STATUS_FLOWS 校验）。",
         "operationId": "tasks_status",
         "parameters": [
           {
@@ -3057,7 +3088,7 @@
           "tasks"
         ],
         "summary": "我的任务列表",
-        "description": "任务中心：当前登录用户的待处理/已完成任务（可按 repo 过滤 / 按时间排序）。\n\nsort_order: desc（默认，最新在前）/ asc（最早在前）\nmode: default（状态优先 active→processing→completed，组内按时间）/ time（纯时间序）",
+        "description": "任务中心：当前登录用户的待处理/已完成任务（可按 repo / 创建人过滤 / 按时间排序）。\n\nsort_order: desc（默认，最新在前）/ asc（最早在前）\nmode: default（状态优先 active→processing→completed，组内按时间）/ time（纯时间序）\ncreated_by_me: 'true' 时仅返回当前用户创建的任务（user_id 匹配，排除 user_id=0）\nassignee: 按创建人筛选（assignee 字段精确匹配）",
         "operationId": "tasks_mine",
         "parameters": [
           {
@@ -3066,7 +3097,7 @@
             "required": false,
             "schema": {
               "type": "string",
-              "pattern": "^(active|completed|)?$",
+              "pattern": "^(active|processing|awaiting_input|pending_review|completed|)?$",
               "default": "",
               "title": "Status"
             }
@@ -3108,6 +3139,30 @@
               "title": "Mode"
             },
             "description": "default=状态优先；time=纯时间序"
+          },
+          {
+            "name": "created_by_me",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "仅我创建的任务",
+              "default": "",
+              "title": "Created By Me"
+            },
+            "description": "仅我创建的任务"
+          },
+          {
+            "name": "assignees",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按创建人筛选(逗号分隔)",
+              "default": "",
+              "title": "Assignees"
+            },
+            "description": "按创建人筛选(逗号分隔)"
           }
         ],
         "responses": {
@@ -3148,8 +3203,8 @@
         "tags": [
           "knowledge"
         ],
-        "summary": "知识清单（项目级 + Agent 维度）",
-        "description": "聚合返回项目级 + Agent 维度知识清单。",
+        "summary": "知识清单（统一列表 + 分页）",
+        "description": "统一知识列表——只查 DB 返回分页列表（不含统计，统计走独立接口）。",
         "operationId": "knowledge_list",
         "parameters": [
           {
@@ -3158,11 +3213,136 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "repo_key，如 gitcode:org/test 或 org/test",
+              "description": "repo_key",
               "default": "",
               "title": "Repo"
             },
-            "description": "repo_key，如 gitcode:org/test 或 org/test"
+            "description": "repo_key"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按来源筛选：system/agent/manual",
+              "default": "",
+              "title": "Source"
+            },
+            "description": "按来源筛选：system/agent/manual"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "页码，从1开始",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码，从1开始"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "每页条数，默认50",
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "每页条数，默认50"
+          },
+          {
+            "name": "show_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "是否包含归档知识",
+              "default": false,
+              "title": "Show Archived"
+            },
+            "description": "是否包含归档知识"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "排序：latest=按更新时间倒序",
+              "default": "",
+              "title": "Sort"
+            },
+            "description": "排序：latest=按更新时间倒序"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "搜索关键词（匹配 name/description）",
+              "default": "",
+              "title": "Q"
+            },
+            "description": "搜索关键词（匹配 name/description）"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/knowledge/stats": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "知识统计",
+        "description": "独立统计接口——返回 system/agent/manual/unlinked 数量。",
+        "operationId": "knowledge_stats",
+        "parameters": [
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
           }
         ],
         "responses": {
@@ -3277,7 +3457,7 @@
           "knowledge"
         ],
         "summary": "合并注入上下文文本",
-        "description": "返回合并注入上下文文本（project-info 摘要 + 共享知识三级 + 成员文档）。",
+        "description": "返回合并注入上下文文本（project-info 摘要 + 共享知识 + 成员文档）。",
         "operationId": "knowledge_context",
         "parameters": [
           {
@@ -3309,8 +3489,284 @@
               "default": 0,
               "title": "Issue Num"
             }
+          },
+          {
+            "name": "scene_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Scene Id"
+            }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/knowledge/{knowledge_id}": {
+      "get": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "Get Knowledge Detail",
+        "description": "按 id 查询单条知识全文。",
+        "operationId": "knowledge_detail",
+        "parameters": [
+          {
+            "name": "knowledge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Knowledge Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/notify": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Assign / notify a task",
+        "description": "创建并通知任务给责任人（agent/bot 场景）。",
+        "operationId": "tasks_notify",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskNotifyBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/close": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Close tasks of an issue",
+        "description": "按 repo_key+issue_number 关闭相关任务。",
+        "operationId": "tasks_close",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCloseBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/clarifications": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Get task clarification history",
+        "operationId": "tasks_clarifications",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/{task_id}/clarify": {
+      "post": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "Reply to a task clarification",
+        "operationId": "tasks_clarify",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskClarifyBody"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -3478,34 +3934,16 @@
         ],
         "title": "ApplySceneRequest"
       },
-      "Body_upload_knowledge_api_knowledge_post": {
+      "ArchiveBody": {
         "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          },
-          "repo": {
-            "type": "string",
-            "title": "Repo",
-            "default": ""
-          },
-          "scope": {
-            "type": "string",
-            "title": "Scope",
-            "default": "project"
-          },
-          "agent_type": {
-            "type": "string",
-            "title": "Agent Type",
-            "default": ""
+          "archived": {
+            "type": "boolean",
+            "title": "Archived",
+            "default": true
           }
         },
         "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_upload_knowledge_api_knowledge_post"
+        "title": "ArchiveBody"
       },
       "Body_upload_scene_icon_api_scenes_market_icon_upload_post": {
         "properties": {
@@ -3681,6 +4119,17 @@
           "repo"
         ],
         "title": "ConvertSkillRequest"
+      },
+      "CreateApiKeyBody": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "CreateApiKeyBody"
       },
       "CreateBranchRequest": {
         "properties": {
@@ -3858,6 +4307,11 @@
             "type": "array",
             "title": "Nodes",
             "default": []
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "default": ""
           }
         },
         "type": "object",
@@ -4321,6 +4775,107 @@
         "type": "object",
         "title": "KnowledgeBody"
       },
+      "KnowledgeEntryBody": {
+        "properties": {
+          "repo": {
+            "type": "string",
+            "title": "Repo",
+            "default": ""
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "default": ""
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeEntryBody"
+      },
+      "KnowledgeRefBatchBody": {
+        "properties": {
+          "scene_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scene Ids",
+            "default": []
+          },
+          "agent_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Agent Types",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeRefBatchBody"
+      },
+      "KnowledgeRefBody": {
+        "properties": {
+          "scene_id": {
+            "type": "string",
+            "title": "Scene Id",
+            "default": ""
+          },
+          "agent_type": {
+            "type": "string",
+            "title": "Agent Type",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeRefBody"
+      },
+      "KnowledgeRefUpdateBody": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeRefUpdateBody"
+      },
+      "KnowledgeUpdateBody": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "KnowledgeUpdateBody"
+      },
       "LabelCreateBody": {
         "properties": {
           "name": {
@@ -4684,6 +5239,23 @@
         ],
         "title": "SceneNodeInput"
       },
+      "SceneRecommendConfigBody": {
+        "properties": {
+          "fallback_scene": {
+            "type": "string",
+            "title": "Fallback Scene",
+            "default": ""
+          },
+          "rules": {
+            "items": {},
+            "type": "array",
+            "title": "Rules",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "SceneRecommendConfigBody"
+      },
       "SceneTagsBody": {
         "properties": {
           "scene_tags": {
@@ -4742,6 +5314,17 @@
         },
         "type": "object",
         "title": "TaskCloseBody"
+      },
+      "TaskConfirmBody": {
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation",
+            "default": "user_confirmed"
+          }
+        },
+        "type": "object",
+        "title": "TaskConfirmBody"
       },
       "TaskCreateBody": {
         "properties": {
@@ -4820,6 +5403,28 @@
           "next_step": {
             "type": "string",
             "title": "Next Step",
+            "default": ""
+          },
+          "actions": {
+            "items": {},
+            "type": "array",
+            "title": "Actions",
+            "default": []
+          },
+          "conclusion": {
+            "type": "string",
+            "title": "Conclusion",
+            "default": ""
+          },
+          "artifacts": {
+            "items": {},
+            "type": "array",
+            "title": "Artifacts",
+            "default": []
+          },
+          "issue_summary": {
+            "type": "string",
+            "title": "Issue Summary",
             "default": ""
           }
         },
@@ -4951,6 +5556,17 @@
             "type": "array",
             "title": "Nodes",
             "default": []
+          },
+          "icon": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Icon"
           }
         },
         "type": "object",
