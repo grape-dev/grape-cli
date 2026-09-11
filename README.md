@@ -105,7 +105,7 @@ grape git-repo issues list --owner o --repo r --state open --json-out
 
 - `query` / `path` params → `--<name>`; `requestBody` → `--json '<JSON>'`; `--json-out` → single-line machine-readable JSON.
 - Discover: `grape <group> --help` / `grape <group> <verb> --help`.
-- If the server's `/openapi.json` is unreachable, the CLI falls back to a bundled contract snapshot (`grape refresh` shows the source).
+- If neither the server's `/static/openapi.json` nor `/openapi.json` is reachable, the CLI falls back to a bundled contract snapshot. Contract fetch priority: `{server}/static/openapi.json` → `/openapi.json` → bundled (`grape refresh` shows the source).
 
 ### git (local execution, zero token exposure)
 

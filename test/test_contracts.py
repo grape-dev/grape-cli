@@ -80,6 +80,46 @@ def test_remote_failure_falls_back_to_bundled(isolate_config, monkeypatch):
     assert "unreachable" in src_info["detail"]
 
 
+# ---------- 拉取优先级：static/openapi.json -> /openapi.json ----------
+
+def test_fetch_schema_prefers_static_url(monkeypatch, fake_httpx):
+    calls = fake_httpx({
+        "/static/openapi.json": (200, {"info": {"version": "9.9.9"}, "paths": {"/x": {}}}),
+        "/openapi.json": (200, {"info": {"version": "bad"}, "paths": {}}),
+    })
+    schema = contracts.fetch_schema("http://x", "tk")
+    assert schema["info"]["version"] == "9.9.9"
+    assert any(u.endswith("/static/openapi.json") for _, u, _ in calls)
+
+
+def test_fetch_schema_falls_back_to_root_openapi(monkeypatch, fake_httpx):
+    calls = fake_httpx({
+        "/static/openapi.json": (404, {"message": "nf"}),
+        "/openapi.json": (200, {"info": {"version": "8.8.8"}, "paths": {"/y": {}}}),
+    })
+    schema = contracts.fetch_schema("http://x", "tk")
+    assert schema["info"]["version"] == "8.8.8"
+    urls = [u for _, u, _ in calls]
+    assert urls[0].endswith("/static/openapi.json")
+    assert urls[1].endswith("/openapi.json")
+
+
+def test_fetch_schema_raises_when_all_paths_fail(monkeypatch, fake_httpx):
+    fake_httpx({"/static/openapi.json": (403, {}), "/openapi.json": (403, {})})
+    with pytest.raises(CliError, match="contract unreachable"):
+        contracts.fetch_schema("http://x", "tk")
+
+
+def test_fetch_schema_malformed_static_falls_through(monkeypatch, fake_httpx):
+    # static 有响应但不是合法契约 → 继续试 /openapi.json
+    fake_httpx({
+        "/static/openapi.json": (200, {"foo": "bar"}),
+        "/openapi.json": (200, {"info": {"version": "7.7.7"}, "paths": {}}),
+    })
+    schema = contracts.fetch_schema("http://x", "tk")
+    assert schema["info"]["version"] == "7.7.7"
+
+
 def test_remote_success_prefers_remote_over_bundled(isolate_config, monkeypatch, sample_schema):
     def _ok(base_url, token):
         return sample_schema

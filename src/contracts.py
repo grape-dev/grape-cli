@@ -1,7 +1,9 @@
-"""契约加载：读 /openapi.json → 缓存 ~/.grape/openapi-<version>.json → 版本检测 → refresh。
+"""契约加载：优先 static/openapi.json → /openapi.json → 缓存 ~/.grape → 内置快照。
 
-兜底策略（方案 C，Issue-45 / issue-1 P0 过渡）：远端 /openapi.json 不可达时，
-回退到安装包内置的契约快照 `src/openapi.json`，保证命令发现不依赖网络。
+拉取优先级（docs/grape-contract-static-fetch-design.md）：
+  1) `{base}/static/openapi.json` —— 服务端固定下载 URL（公开、no-cache、绕过 nginx 封禁）
+  2) `{base}/openapi.json`        —— 兼容未提供 static 的部署
+  3) 安装包内置快照 `src/data/openapi.json`（方案 C 兜底，命令发现不依赖网络）
 """
 import json
 from importlib.resources import files
@@ -12,6 +14,8 @@ from src.client import ApiClient, CliError
 
 # 内置快照来源信息：kind ∈ {"remote", "cache", "bundled"}
 _last_source = {"kind": "", "detail": ""}
+
+_CONTRACT_PATHS = ("/static/openapi.json", "/openapi.json")
 
 
 def cache_path(version: str = "") -> Path:
@@ -43,11 +47,18 @@ def _read_cache() -> dict | None:
 
 
 def fetch_schema(base_url: str, token: str) -> dict:
+    """按优先级尝试拉取契约：static/openapi.json → /openapi.json。"""
     api = ApiClient(base_url=base_url, token=token)
-    _, data = api.request("GET", "/openapi.json")
-    if not isinstance(data, dict) or "paths" not in data:
-        raise CliError("openapi.json contract malformed (missing 'paths')")
-    return data
+    last_error: Exception | None = None
+    for path in _CONTRACT_PATHS:
+        try:
+            _s, data = api.request("GET", path)
+            if isinstance(data, dict) and "paths" in data:
+                return data
+            raise CliError(f"contract malformed (missing 'paths'): {path}")
+        except Exception as e:
+            last_error = e
+    raise CliError(f"contract unreachable from any of {_CONTRACT_PATHS} ({last_error})")
 
 
 def load_bundled() -> dict | None:

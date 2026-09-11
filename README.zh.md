@@ -104,7 +104,7 @@ grape git-repo issues list --owner o --repo r --state open --json-out
 
 - `query` / `path` 参数 → `--<name>`；`requestBody` → `--json '<JSON 字符串>'`；`--json-out` → 单行机器可读 JSON。
 - 可用性：`grape <group> --help` 查看动词；`grape <group> <verb> --help` 查看参数。
-- 服务端 `/openapi.json` 不可达时，CLI 自动回退到内置契约快照（`grape refresh` 会显示来源）。
+- 契约拉取优先级：`{server}/static/openapi.json` → `/openapi.json` → 内置快照；两者都不可达时自动回退内置快照（`grape refresh` 会显示来源）。
 
 ### git（本地执行，token 零暴露）
 
