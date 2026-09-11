@@ -94,6 +94,35 @@ def test_contract_group_accepts_short_help_flag(sample_schema):
     assert "-h" in groups["tasks"].context_settings["help_option_names"]
 
 
+def test_generated_command_help_marks_method_and_body(sample_schema):
+    ops = parse_operations(sample_schema)
+    by_id = {o["operationId"]: o for o in ops}
+    create = build_command(by_id["tasks_create"])
+    mine = build_command(by_id["tasks_mine"])
+    assert "(POST, body: yes)" in create.help.splitlines()[0]
+    assert "(GET, body: no)" in mine.help.splitlines()[0]
+
+
+def test_generated_command_help_has_example(sample_schema):
+    ops = parse_operations(sample_schema)
+    op = next(o for o in ops if o["operationId"] == "tasks_create")
+    cmd = build_command(op)
+    assert "Examples:" in cmd.help
+    assert "grape tasks create" in cmd.help
+    assert "--json" in cmd.help
+
+
+def test_issues_update_help_discloses_body_fields():
+    from src.contracts import load_bundled
+
+    groups = build_groups(load_bundled())
+    update = groups["git-repo"].commands["issues"].commands["update"]
+    assert "Body fields" in update.help
+    assert "assignee" in update.help
+    assert "state" in update.help
+    assert "Examples:" in update.help
+
+
 def test_en_summary_overlay_falls_back_to_contract(sample_schema):
     # 覆盖层未收录的 operationId 回落契约 summary
     op = {"operationId": "custom_thing", "summary": "Do a custom thing"}

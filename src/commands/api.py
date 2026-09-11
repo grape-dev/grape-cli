@@ -7,7 +7,9 @@ from src.client import ApiClient
 
 
 def api_command() -> click.Command:
-    @click.command(name="api", help="Generic fallback: call any API (method/path from contract whitelist)")
+    @click.command(name="api",
+                   help="Generic fallback: call any API endpoint (same endpoints as contract commands); "
+                        "prefer `grape <group> <verb> --help` for full details")
     @click.argument("method")
     @click.argument("path")
     @click.option("-d", "--data", default="", help="JSON request body")

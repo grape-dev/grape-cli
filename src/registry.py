@@ -57,6 +57,7 @@ def group_name(g: str) -> str:
 
 def parse_operations(schema: dict) -> list[dict]:
     ops = []
+    schemas = schema.get("components", {}).get("schemas", {})
     for path, methods in (schema.get("paths") or {}).items():
         for method, op in methods.items():
             if not isinstance(op, dict) or not op.get("operationId"):
@@ -71,12 +72,52 @@ def parse_operations(schema: dict) -> list[dict]:
                 "group": group_name(parts[0]),
                 "verb": verb,
                 "op": op,
+                "schemas": schemas,
             })
     return ops
 
 
 def _params_by_in(op: dict, where: str) -> list[str]:
     return [p["name"] for p in (op.get("parameters") or []) if p.get("in") == where]
+
+
+def _body_fields(meta: dict) -> list[str]:
+    """解析 requestBody schema 的字段清单（$ref 解引用到 components）。"""
+    op = meta["op"]
+    content = ((op.get("requestBody") or {}).get("content") or {}).get("application/json") or {}
+    sch = content.get("schema") or {}
+    name = (sch.get("$ref") or "").rsplit("/", 1)[-1]
+    schema = meta.get("schemas", {}).get(name, {}) if name else (sch or {})
+    return sorted(schema.get("properties") or {})
+
+
+_EXAMPLES: dict = {}
+
+
+def _load_examples() -> dict:
+    global _EXAMPLES
+    if not _EXAMPLES:
+        try:
+            _EXAMPLES = json.loads(
+                files("src").joinpath("data", "examples.json").read_text(encoding="utf-8")
+            )
+        except Exception:
+            _EXAMPLES = {}
+    return _EXAMPLES
+
+
+def _example_args(meta: dict, path_params: list[str], query_params: list[str],
+                  body_fields: list[str]) -> str:
+    """命令示例参数：优先 examples.json，否则按路径参数/body 字段自动生成占位示例。"""
+    ex = _load_examples().get(meta["operationId"])
+    if ex:
+        return ex
+    parts = [f"--{n} <{n}>" for n in path_params]
+    if body_fields:
+        parts.append(f"--json '{{\"{body_fields[0]}\":\"...\"}}'")
+    else:
+        parts += [f"--{n} <{n}>" for n in query_params[:2]]
+    return " ".join(parts)
 
 
 def build_command(meta: dict) -> click.Command:
@@ -116,9 +157,20 @@ def build_command(meta: dict) -> click.Command:
     # 描述仅保留 ASCII（契约描述多为中文，帮助统一英文）
     if desc and not desc.isascii():
         desc = ""
+    has_body_flag = "yes" if has_body else "no"
     method_path = f"Invoke grape API: {method} {path}"
-    # 首行=实际含义（短帮助/命令列表直接展示），其后附链路信息
-    help_lines = [summary or f"{method} {path}", "", method_path]
+    # 首行=实际含义 + 方法与是否需要 body（短帮助/命令列表直接展示）
+    first = f"{summary or f'{method} {path}'} ({method}, body: {has_body_flag})"
+    help_lines = [first, "", method_path]
+    body_fields = _body_fields(meta)
+    if body_fields:
+        help_lines.append(f"Body fields: {', '.join(body_fields)}")
+    elif has_body:
+        help_lines.append("Body fields: (free-form JSON)")
+    example_args = _example_args(meta, path_params, query_params, body_fields)
+    if example_args:
+        command_line = f"grape {meta['group']} {' '.join(meta['verb'])} {example_args}"
+        help_lines += ["", "Examples:", "  " + command_line]
     if desc and desc != summary:
         help_lines += ["", desc]
     help_text = "\n".join(help_lines)

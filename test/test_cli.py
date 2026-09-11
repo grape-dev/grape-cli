@@ -133,6 +133,13 @@ def test_api_fallback(env, fake_httpx, standard_router):
     assert json.loads(res.output)["scenes"] == ["s1", "s2"]
 
 
+def test_commands_help_hints_pattern_filter(env):
+    res = CliRunner().invoke(cli, ["commands", "--help"])
+    assert res.exit_code == 0
+    assert "grape commands issue" in res.output
+    assert "filter" in res.output
+
+
 def test_missing_token_fails_readably(monkeypatch, isolate_config):
     from src.client import CliError
 

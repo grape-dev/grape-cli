@@ -190,7 +190,7 @@ def refresh_cmd():
 @cli.command(name="commands")
 @click.argument("pattern", default="")
 def commands_cmd(pattern: str):
-    """List all contract commands (pipeable filter)."""
+    """List contract commands; filter with a pattern, e.g. 'grape commands issue'."""
     lines = _tree_lines(pattern)
     for line in lines:
         click.echo(line)

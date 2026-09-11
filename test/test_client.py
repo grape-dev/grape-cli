@@ -69,6 +69,20 @@ def test_timeout_error_maps_to_clierror(monkeypatch, fake_httpx):
         ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
 
 
+def test_403_gitrepo_path_adds_hint(monkeypatch, fake_httpx):
+    fake_httpx({"/api/repos/o/r/issues": (403, {"message": "forbidden"})})
+    with pytest.raises(CliError, match="session token") as e:
+        ApiClient(base_url="http://x", token="t").request("GET", "/api/repos/o/r/issues")
+    assert e.value.code == 403
+
+
+def test_404_gitrepo_path_adds_hint(monkeypatch, fake_httpx):
+    fake_httpx({"/api/repos/o/r/issues": (404, {"message": "nf"})})
+    with pytest.raises(CliError, match="owner/repo/number") as e:
+        ApiClient(base_url="http://x", token="t").request("GET", "/api/repos/o/r/issues")
+    assert e.value.code == 404
+
+
 def test_query_params_drop_empty_values(monkeypatch, fake_httpx):
     calls = fake_httpx({"/api/x": (200, {})})
     ApiClient(base_url="http://x", token="t").request(

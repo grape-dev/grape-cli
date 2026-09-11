@@ -55,14 +55,23 @@ class ApiClient:
         except httpx.HTTPError as e:
             raise CliError(f"HTTP error: {self.base_url}{path} ({e})")
         if r.status_code == 401:
-            raise CliError("authentication failed: token invalid or expired", code=401)
+            raise CliError(
+                "authentication failed: token invalid or expired; "
+                "re-inject GRAPE_SESSION_TOKEN / GRAPE_API_TOKEN",
+                code=401,
+            )
         try:
             data = r.json()
         except Exception:
             data = r.text
         if r.status_code >= 400:
             msg = data.get("message") if isinstance(data, dict) else str(data)
-            raise CliError(f"HTTP {r.status_code}: {msg or 'request failed'}", code=r.status_code)
+            hint = ""
+            if r.status_code == 403 and path.startswith("/api/repos"):
+                hint = " (git-repo API: session token (tk_) only; check repo write permission)"
+            elif r.status_code == 404 and path.startswith("/api/repos"):
+                hint = " (check owner/repo/number)"
+            raise CliError(f"HTTP {r.status_code}: {msg or 'request failed'}{hint}", code=r.status_code)
         return r.status_code, data
 
 
