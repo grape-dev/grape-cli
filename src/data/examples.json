@@ -14,7 +14,10 @@
   "gitrepo_git_credential": "--owner o --repo r --json-out",
   "gitrepo_branches": "--owner o --repo r --json-out",
   "gitrepo_commits": "--owner o --repo r --json-out",
-  "gitrepo_contents": "--owner o --repo r --path <path>",
+  "gitrepo_contents": [
+    "--owner o --repo r --path \"\" --json-out",
+    "--owner o --repo r --path README.md --ref main --json-out"
+  ],
   "gitrepo_labels_list": "--owner o --repo r --json-out",
   "gitrepo_labels_create": "--owner o --repo r --json '{\"name\":\"<label>\",\"color\":\"#d73a4a\"}'",
   "gitrepo_milestones": "--owner o --repo r",

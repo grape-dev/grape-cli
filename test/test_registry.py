@@ -114,6 +114,17 @@ def test_generated_command_help_has_example(sample_schema):
     assert "--json" in cmd.help
 
 
+def test_contents_help_has_bidirectional_examples():
+    from src.contracts import load_bundled
+
+    groups = build_groups(load_bundled())
+    contents = groups["git-repo"].commands["contents"]
+    assert "Examples:" in contents.help
+    assert '--path ""' in contents.help
+    assert "--path README.md" in contents.help
+    assert "list root" in contents.help or "--path \"\"" in contents.help
+
+
 def test_issues_update_help_discloses_body_fields():
     from src.contracts import load_bundled
 

@@ -108,17 +108,17 @@ def _load_examples() -> dict:
 
 
 def _example_args(meta: dict, path_params: list[str], query_params: list[str],
-                  body_fields: list[str]) -> str:
-    """命令示例参数：优先 examples.json，否则按路径参数/body 字段自动生成占位示例。"""
-    ex = _load_examples().get(meta["operationId"])
-    if ex:
-        return ex
+                  body_fields: list[str]) -> list[str]:
+    """命令示例参数列表：优先 examples.json（str 或 list），否则自动生成占位示例。"""
+    raw = _load_examples().get(meta["operationId"])
+    if raw:
+        return raw if isinstance(raw, list) else [raw]
     parts = [f"--{n} <{n}>" for n in path_params]
     if body_fields:
         parts.append(f"--json '{{\"{body_fields[0]}\":\"...\"}}'")
     else:
         parts += [f"--{n} <{n}>" for n in query_params[:2]]
-    return " ".join(parts)
+    return [" ".join(parts)]
 
 
 def _validate_body(meta: dict, body, body_fields: list[str]) -> None:
@@ -193,10 +193,12 @@ def build_command(meta: dict) -> click.Command:
         help_lines.append(f"Body fields: {', '.join(body_fields)}")
     elif has_body:
         help_lines.append("Body fields: (free-form JSON)")
-    example_args = _example_args(meta, path_params, query_params, body_fields)
-    if example_args:
-        command_line = f"grape {meta['group']} {' '.join(meta['verb'])} {example_args}"
-        help_lines += ["", "Examples:", "  " + command_line]
+    example_lines = _example_args(meta, path_params, query_params, body_fields)
+    if example_lines:
+        help_lines += ["", "Examples:"]
+        command_path = f"grape {meta['group']} {' '.join(meta['verb'])}"
+        for e in example_lines:
+            help_lines.append(f"  {command_path} {e}")
     if desc and desc != summary:
         help_lines += ["", desc]
     help_text = "\n".join(help_lines)

@@ -83,6 +83,14 @@ def test_404_gitrepo_path_adds_hint(monkeypatch, fake_httpx):
     assert e.value.code == 404
 
 
+def test_404_contents_path_adds_list_hint(monkeypatch, fake_httpx):
+    fake_httpx({"/api/repos/o/r/contents/nope": (404, {"message": "nf"})})
+    with pytest.raises(CliError, match="list root") as e:
+        ApiClient(base_url="http://x", token="t").request(
+            "GET", "/api/repos/o/r/contents/nope")
+    assert e.value.code == 404
+
+
 def test_query_params_drop_empty_values(monkeypatch, fake_httpx):
     calls = fake_httpx({"/api/x": (200, {})})
     ApiClient(base_url="http://x", token="t").request(

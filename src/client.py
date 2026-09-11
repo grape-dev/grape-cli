@@ -70,7 +70,10 @@ class ApiClient:
             if r.status_code == 403 and path.startswith("/api/repos"):
                 hint = " (git-repo API: session token (tk_) only; check repo write permission)"
             elif r.status_code == 404 and path.startswith("/api/repos"):
-                hint = " (check owner/repo/number)"
+                if "/contents" in path:
+                    hint = " (path not found; try --path '' to list root)"
+                else:
+                    hint = " (check owner/repo/number)"
             raise CliError(f"HTTP {r.status_code}: {msg or 'request failed'}{hint}", code=r.status_code)
         return r.status_code, data
 
