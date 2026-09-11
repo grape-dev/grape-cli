@@ -200,6 +200,23 @@ def _is_meta(v) -> bool:
     return isinstance(v, dict) and "operationId" in v
 
 
+class _ContractGroup(click.Group):
+    """契约组：agent 友好——组被带未知选项调用且无有效子命令时展示组帮助，而非报错。
+
+    仅影响『选项出现在首个子命令令牌之前』的组级解析；有真实子命令时叶子选项不受影响。
+    """
+
+    def parse_args(self, ctx, args):
+        try:
+            return super().parse_args(ctx, args)
+        except click.UsageError as e:
+            msg = e.message or ""
+            if msg.startswith(("No such option", "Got unexpected extra argument")):
+                click.echo(ctx.get_help())
+                ctx.exit(0)
+            raise
+
+
 def _materialize(subtree: dict, name: str) -> click.Group:
     """按子命令摘要聚合出“实际含义”，作为组帮助首行（方便 agent 快速理解）。"""
     meaning = []
@@ -216,10 +233,10 @@ def _materialize(subtree: dict, name: str) -> click.Group:
     lines += [
         ", ".join(meaning),
         "",
-        f"Contract-driven group under group '{name}' "
-        "(auto-generated from the OpenAPI contract by operationId).",
+        "Invoke a subcommand (verb) of this group: "
+        f"`grape <group> {name} <verb>`; bare invocation shows this help.",
     ]
-    grp = click.Group(
+    grp = _ContractGroup(
         name=name,
         help="\n".join(lines),
         context_settings=dict(help_option_names=["-h", "--help"]),
