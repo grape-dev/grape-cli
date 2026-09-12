@@ -7,6 +7,7 @@
 - **新增 OpenAPI 接口 → 重建契约 → CLI 自动获得命令，零 CLI 源码改动**（R7）。
 - 帮助语义：优先 `src/data/openapi.en.json` 的 operationId → 英文含义，回退契约 summary。
 """
+import difflib
 import json
 import re
 from importlib.resources import files
@@ -228,11 +229,44 @@ def _is_meta(v) -> bool:
     return isinstance(v, dict) and "operationId" in v
 
 
-class _ContractGroup(click.Group):
-    """契约组：agent 友好——组被带未知选项调用且无有效子命令时展示组帮助，而非报错。
+# 常见 git 概念 → 契约动词 的别名建议（agent 猜名时的兜底）
+_ALIAS_SUGGESTIONS = {
+    "files": ["tree", "contents"],
+    "file": ["contents"],
+    "branch": ["branches"],
+    "branches": ["branches"],
+    "commit": ["commits"],
+    "commits": ["commits"],
+    "log": ["commits"],
+    "repo": ["repo"],
+}
 
-    仅影响『选项出现在首个子命令令牌之前』的组级解析；有真实子命令时叶子选项不受影响。
+
+class _ContractGroup(click.Group):
+    """契约组：agent 友好。
+
+    - 未知子命令 → difflib/别名给出 `Did you mean: ...`；
+    - 组被带未知选项调用（无首个子命令令牌）→ 打印组帮助而非报错。
     """
+
+    def resolve_command(self, ctx, args):
+        try:
+            return super().resolve_command(ctx, args)
+        except click.UsageError as e:
+            msg = e.message or ""
+            if msg.startswith("No such command"):
+                m = re.match(r"No such command ['\"]([^'\"]+)['\"]", msg)
+                if m:
+                    name = m.group(1)
+                    cands = list(set(self.commands) | set(self.list_commands(ctx)))
+                    sugg = difflib.get_close_matches(name, cands, n=3, cutoff=0.55)
+                    sugg += [s for s in _ALIAS_SUGGESTIONS.get(name, []) if s not in sugg and s in cands]
+                    if sugg:
+                        raise click.UsageError(
+                            f"No such command '{name}'. Did you mean: " + ", ".join(sugg) + "?",
+                            ctx,
+                        )
+            raise
 
     def parse_args(self, ctx, args):
         try:

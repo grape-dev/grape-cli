@@ -143,7 +143,7 @@ def test_commands_help_hints_pattern_filter(env):
 def test_subgroup_bare_invocation_shows_help(env, fake_httpx, standard_router):
     fake_httpx(standard_router)
     res = CliRunner().invoke(cli, ["git-repo", "issues"])
-    # click 裸组默认展示 Usage+Commands（exit 2）；agent 可见可用动词
+    # 裸组展示 Commands（可用动词）；exit 2 为 click 约定但帮助可见
     assert res.exit_code in (0, 2)
     assert "list" in (res.output + getattr(res, "stderr", ""))
 
@@ -154,6 +154,15 @@ def test_subgroup_with_stray_args_shows_help_not_error(env, fake_httpx, standard
     assert res.exit_code == 0
     assert "No such option" not in res.output
     assert "list" in res.output
+
+
+def test_unknown_subcommand_suggests_similar(env, fake_httpx, standard_router):
+    fake_httpx(standard_router)
+    res = CliRunner().invoke(cli, ["git-repo", "issuess"])
+    assert res.exit_code != 0
+    out = res.output + getattr(res, "stderr", "")
+    assert "Did you mean" in out
+    assert "issues" in out
 
 
 def test_missing_token_fails_readably(monkeypatch, isolate_config):
