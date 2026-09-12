@@ -598,7 +598,7 @@
         "tags": [
           "git-repo"
         ],
-        "summary": "文件内容（base64）",
+        "summary": "仓库内容：目录列表（path 空/目录）或文件内容（base64）",
         "operationId": "gitrepo_contents",
         "parameters": [
           {
@@ -3799,6 +3799,208 @@
           }
         ]
       }
+    },
+    "/api/repos/{owner}/{repo}/tree": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库目录树（单层；GitHub 支持递归）",
+        "description": "取仓库目录树。\n\n- 单层（default）：透传 `git/trees/{ref}`，返回该层 tree+blob 条目（type/name/path/mode/sha）。\n- 递归（depth=recursive）：仅 GitHub 支持（`git/trees/{sha}?recursive=1`）；\n  GitCode 平台 recursive 返回破碎树（丢失 blob），故明确拒绝，避免产出残缺数据。\n- ref 空 → 自动解析默认分支。",
+        "operationId": "gitrepo_tree",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "分支/引用，空=默认分支",
+              "default": "",
+              "title": "Ref"
+            },
+            "description": "分支/引用，空=默认分支"
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "single(单层，默认)/recursive(递归，仅 GitHub)",
+              "default": "single",
+              "title": "Depth"
+            },
+            "description": "single(单层，默认)/recursive(递归，仅 GitHub)"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/repos/{owner}/{repo}/contents": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库内容：根目录列表",
+        "description": "取仓库根目录条目列表（空 path → GitCode contents 返回根目录数组）。",
+        "operationId": "gitrepo_contents_root",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "分支/引用",
+              "default": "",
+              "title": "Ref"
+            },
+            "description": "分支/引用"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "gitcode/github/gitlab，缺省 gitcode",
+              "default": "",
+              "title": "Provider"
+            },
+            "description": "gitcode/github/gitlab，缺省 gitcode"
+          },
+          {
+            "name": "X-Git-Provider",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "X-Git-Provider"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -4748,6 +4950,11 @@
           "state": {
             "type": "string",
             "title": "State",
+            "default": ""
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
             "default": ""
           }
         },

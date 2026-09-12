@@ -144,12 +144,27 @@ def test_unknown_body_field_rejected(monkeypatch, isolate_config):
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
     res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
-                                      "--json", '{"body":"x"}'])
+                                      "--json", '{"assignee_ids":[1]}'])
     assert res.exit_code != 0
     assert isinstance(res.exception, CliError)
-    assert "unknown request field(s): body" in str(res.exception)
+    assert "unknown request field(s): assignee_ids" in str(res.exception)
     assert "assignee" in str(res.exception)
-    assert "--help" in str(res.exception)
+
+
+def test_issues_update_body_now_allowed(monkeypatch, fake_httpx):
+    """服务端已支持 issues update 的 body 字段 → 守卫放行。"""
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    calls = fake_httpx({"/api/repos/o/r/issues/7": (200, {"ok": True})})
+    update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
+    res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
+                                      "--json", '{"body":"new body"}'])
+    assert res.exit_code == 0
+    patch_bodies = [k.get("json") for m, _, k in calls if m == "PATCH"]
+    assert {"body": "new body"} == patch_bodies[0]
 
 
 def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):

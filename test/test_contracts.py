@@ -159,3 +159,17 @@ def test_bundled_contract_has_refreshed_task_endpoints():
     assert "auth_profile_get" in all_ids
     mine_params = {p["name"] for p in bundled["paths"]["/api/tasks/mine"]["get"].get("parameters", [])}
     assert {"status", "repo_key", "sort_order", "mode"} <= mine_params
+
+
+def test_bundled_contract_has_repo_tree_capabilities():
+    """内置快照应含服务端新能力：tree / contents_root / issues update body。"""
+    bundled = contracts.load_bundled()
+    tree = bundled["paths"]["/api/repos/{owner}/{repo}/tree"]["get"]
+    assert tree["operationId"] == "gitrepo_tree"
+    assert {p["name"] for p in tree["parameters"]} >= {"ref", "depth", "owner", "repo"}
+
+    root = bundled["paths"]["/api/repos/{owner}/{repo}/contents"]["get"]
+    assert root["operationId"] == "gitrepo_contents_root"
+
+    iub = bundled["components"]["schemas"]["IssueUpdateBody"]["properties"]
+    assert "body" in iub

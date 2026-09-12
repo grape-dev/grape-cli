@@ -14,6 +14,8 @@
   "gitrepo_git_credential": "--owner o --repo r --json-out",
   "gitrepo_branches": "--owner o --repo r --json-out",
   "gitrepo_commits": "--owner o --repo r --json-out",
+  "gitrepo_tree": "--owner o --repo r --ref main --json-out",
+  "gitrepo_contents_root": "--owner o --repo r --json-out",
   "gitrepo_contents": [
     "--owner o --repo r --path \"\" --json-out",
     "--owner o --repo r --path README.md --ref main --json-out"
