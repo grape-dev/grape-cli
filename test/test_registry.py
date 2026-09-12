@@ -201,6 +201,37 @@ def test_json_at_missing_file_errors(monkeypatch, fake_httpx, tmp_path):
     assert "cannot read --json file" in str(res.exception)
 
 
+def test_contents_omits_path_lists_root(monkeypatch, fake_httpx):
+    """contents 缺省 --path → 根目录列表（规整到 /contents 根路由）。"""
+    from urllib.parse import urlsplit
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    calls = fake_httpx({"/api/repos/o/r/contents": (200, [{"type": "dir", "name": "configs"}])})
+    contents = cli.get_command(None, "git-repo").commands["contents"]
+    res = CliRunner().invoke(contents, ["--owner", "o", "--repo", "r"])
+    assert res.exit_code == 0
+    gotten = [urlsplit(u).path for _, u, _ in calls if "contents" in u]
+    assert "/api/repos/o/r/contents" in gotten
+    assert not any(x.endswith("/contents/") for x in gotten)
+
+
+def test_other_required_path_param_still_enforced(monkeypatch, fake_httpx):
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    fake_httpx({})
+    get_issue = cli.get_command(None, "git-repo").commands["issues"].commands["get"]
+    res = CliRunner().invoke(get_issue, ["--owner", "o", "--repo", "r"])  # 缺 --number
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "Missing required parameter --number" in str(res.exception)
+
+
 def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):
     from click.testing import CliRunner
     from src.cli import cli

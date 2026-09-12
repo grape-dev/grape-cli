@@ -175,8 +175,14 @@ def build_command(meta: dict) -> click.Command:
         for name in path_params:
             v = kw.get(name)
             if v is None:
-                raise CliError(f"Missing required parameter --{name}")
+                if _OPTIONAL_EMPTY_PATH.get(meta["operationId"]) == name:
+                    v = ""
+                else:
+                    raise CliError(f"Missing required parameter --{name}")
             url = url.replace("{" + name + "}", str(v))
+        # contents 缺省空 path → 规整到根路由（/contents/ 去尾斜杠 → /contents）
+        if meta["operationId"] == "gitrepo_contents" and url.endswith("/contents/"):
+            url = url[:-1]
         params = {n: kw.get(n) for n in query_params if kw.get(n) is not None}
         body = None
         raw = kw.get("json")
@@ -257,6 +263,11 @@ _ALIAS_SUGGESTIONS = {
     "commits": ["commits"],
     "log": ["commits"],
     "repo": ["repo"],
+}
+
+# 可省略的 path 参数：缺省按服务端空 path 语义（如 contents 缺省 → 根目录列表）
+_OPTIONAL_EMPTY_PATH = {
+    "gitrepo_contents": "path",
 }
 
 
