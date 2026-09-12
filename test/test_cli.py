@@ -140,6 +140,13 @@ def test_commands_help_hints_pattern_filter(env):
     assert "filter" in res.output
 
 
+def test_commands_no_pattern_hints_on_stderr(env, fake_httpx, standard_router):
+    fake_httpx(standard_router)
+    res = CliRunner().invoke(cli, ["commands"])
+    assert res.exit_code == 0
+    assert "grape commands <pattern>" in res.output
+
+
 def test_subgroup_bare_invocation_shows_help(env, fake_httpx, standard_router):
     fake_httpx(standard_router)
     res = CliRunner().invoke(cli, ["git-repo", "issues"])

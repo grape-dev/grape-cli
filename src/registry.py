@@ -122,6 +122,21 @@ def _example_args(meta: dict, path_params: list[str], query_params: list[str],
     return [" ".join(parts)]
 
 
+def _read_json_arg(raw) -> str:
+    """--json 入参读取：`@file.json` 读文件、`@-` 读 stdin，其余原样返回。"""
+    if isinstance(raw, str) and raw.startswith("@"):
+        path = raw[1:]
+        try:
+            if path == "-":
+                import sys
+                return sys.stdin.read()
+            with open(path, encoding="utf-8") as f:
+                return f.read()
+        except OSError as e:
+            raise CliError(f"cannot read --json file '{path}': {e}")
+    return raw
+
+
 def _validate_body(meta: dict, body, body_fields: list[str]) -> None:
     """请求体未知字段守卫（通用）：可枚举 schema 时，--json 内键必须都在允许集内。
 
@@ -150,7 +165,8 @@ def build_command(meta: dict) -> click.Command:
     options = [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in path_params]
     options += [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in query_params]
     if has_body:
-        options.append(click.Option(["--json"], default=None, help="JSON string request body"))
+        options.append(click.Option(["--json"], default=None,
+                                     help="JSON string request body (or @file.json)"))
     options.append(click.Option(["--json-out"], is_flag=True, help="machine-readable JSON output"))
 
     def _run(**kw):
@@ -166,7 +182,9 @@ def build_command(meta: dict) -> click.Command:
         raw = kw.get("json")
         if has_body and raw:
             try:
-                body = json.loads(raw)
+                body = json.loads(_read_json_arg(raw))
+            except CliError:
+                raise
             except Exception:
                 raise CliError("--json is not a valid JSON string")
             if body_fields and not isinstance(body, dict):

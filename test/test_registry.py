@@ -167,6 +167,40 @@ def test_issues_update_body_now_allowed(monkeypatch, fake_httpx):
     assert {"body": "new body"} == patch_bodies[0]
 
 
+def test_json_at_file_supported(monkeypatch, fake_httpx, tmp_path):
+    """--json @file.json 读取请求体（curl 风格）。"""
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    payload = tmp_path / "payload.json"
+    payload.write_text('{"state":"closed"}', encoding="utf-8")
+    calls = fake_httpx({"/api/repos/o/r/issues/7": (200, {"ok": True})})
+    update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
+    res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
+                                      "--json", f"@{payload}"])
+    assert res.exit_code == 0
+    patch_bodies = [k.get("json") for m, _, k in calls if m == "PATCH"]
+    assert {"state": "closed"} in patch_bodies
+
+
+def test_json_at_missing_file_errors(monkeypatch, fake_httpx, tmp_path):
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
+    res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
+                                      "--json", "@/no/such/file.json"])
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "cannot read --json file" in str(res.exception)
+
+
 def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):
     from click.testing import CliRunner
     from src.cli import cli

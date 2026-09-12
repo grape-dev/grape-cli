@@ -194,6 +194,8 @@ def commands_cmd(pattern: str):
     lines = _tree_lines(pattern)
     for line in lines:
         click.echo(line)
+    if not pattern:
+        click.echo("hint: filter commands with: grape commands <pattern>", err=True)
     if not lines:
         click.echo("no contract commands matched (run grape refresh or check base_url/token)")
 
