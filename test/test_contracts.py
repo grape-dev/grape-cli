@@ -164,11 +164,11 @@ def test_bundled_contract_has_refreshed_task_endpoints():
 def test_bundled_contract_has_repo_tree_capabilities():
     """内置快照应含服务端新能力：tree / contents_root / issues update body。"""
     bundled = contracts.load_bundled()
-    tree = bundled["paths"]["/api/repos/{owner}/{repo}/tree"]["get"]
+    tree = bundled["paths"]["/api/git-repo/{owner}/{repo}/tree"]["get"]
     assert tree["operationId"] == "gitrepo_tree"
     assert {p["name"] for p in tree["parameters"]} >= {"ref", "depth", "owner", "repo"}
 
-    root = bundled["paths"]["/api/repos/{owner}/{repo}/contents"]["get"]
+    root = bundled["paths"]["/api/git-repo/{owner}/{repo}/contents"]["get"]
     assert root["operationId"] == "gitrepo_contents_root"
 
     iub = bundled["components"]["schemas"]["IssueUpdateBody"]["properties"]

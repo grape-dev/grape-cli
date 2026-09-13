@@ -158,7 +158,7 @@ def test_issues_update_body_now_allowed(monkeypatch, fake_httpx):
 
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
-    calls = fake_httpx({"/api/repos/o/r/issues/7": (200, {"ok": True})})
+    calls = fake_httpx({"/api/git-repo/o/r/issues/7": (200, {"ok": True})})
     update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
     res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
                                       "--json", '{"body":"new body"}'])
@@ -176,7 +176,7 @@ def test_json_at_file_supported(monkeypatch, fake_httpx, tmp_path):
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
     payload = tmp_path / "payload.json"
     payload.write_text('{"state":"closed"}', encoding="utf-8")
-    calls = fake_httpx({"/api/repos/o/r/issues/7": (200, {"ok": True})})
+    calls = fake_httpx({"/api/git-repo/o/r/issues/7": (200, {"ok": True})})
     update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
     res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
                                       "--json", f"@{payload}"])
@@ -209,12 +209,12 @@ def test_contents_omits_path_lists_root(monkeypatch, fake_httpx):
 
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
-    calls = fake_httpx({"/api/repos/o/r/contents": (200, [{"type": "dir", "name": "configs"}])})
+    calls = fake_httpx({"/api/git-repo/o/r/contents": (200, [{"type": "dir", "name": "configs"}])})
     contents = cli.get_command(None, "git-repo").commands["contents"]
     res = CliRunner().invoke(contents, ["--owner", "o", "--repo", "r"])
     assert res.exit_code == 0
     gotten = [urlsplit(u).path for _, u, _ in calls if "contents" in u]
-    assert "/api/repos/o/r/contents" in gotten
+    assert "/api/git-repo/o/r/contents" in gotten
     assert not any(x.endswith("/contents/") for x in gotten)
 
 
@@ -238,7 +238,7 @@ def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):
 
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
-    calls = fake_httpx({"/api/repos/o/r/issues/7": (200, {"ok": True})})
+    calls = fake_httpx({"/api/git-repo/o/r/issues/7": (200, {"ok": True})})
     update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
     res = CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
                                       "--json", '{"state":"closed"}'])

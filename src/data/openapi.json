@@ -158,13 +158,14 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}": {
+    "/api/repos/{owner}/{repo}/git-credential": {
       "get": {
         "tags": [
-          "git-repo"
+          "repos"
         ],
-        "summary": "仓库信息（clone_url/default_branch）",
-        "operationId": "gitrepo_repo",
+        "summary": "一次性 git 平台凭据（方案③ CLI 内部使用，TTL 过期）",
+        "description": "返回 CLI 本地执行 git 所需的平台凭据（一次性/短期，进程内使用不落盘）。\n\ngitcode：Basic 用 username=`x-access-token`、password=配置的 gitcode token。",
+        "operationId": "repos_git_credential",
         "parameters": [
           {
             "name": "owner",
@@ -182,28 +183,6 @@
             "schema": {
               "type": "string",
               "title": "Repo"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -243,10 +222,10 @@
     "/api/repos/{owner}/{repo}/workspace": {
       "get": {
         "tags": [
-          "git-repo"
+          "repos"
         ],
         "summary": "仓库工作区路径（CLI 本地 git 用）",
-        "operationId": "gitrepo_workspace",
+        "operationId": "repos_workspace",
         "parameters": [
           {
             "name": "owner",
@@ -264,28 +243,6 @@
             "schema": {
               "type": "string",
               "title": "Repo"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -322,14 +279,13 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/git-credential": {
+    "/api/git-repo/{owner}/{repo}": {
       "get": {
         "tags": [
           "git-repo"
         ],
-        "summary": "一次性 git 平台凭据（方案③ CLI 内部使用，TTL 过期）",
-        "description": "返回 CLI 本地执行 git 所需的平台凭据（一次性/短期，进程内使用不落盘）。\n\ngitcode：Basic 用 username=`x-access-token`、password=配置的 gitcode token。",
-        "operationId": "gitrepo_git_credential",
+        "summary": "仓库信息（clone_url/default_branch）",
+        "operationId": "gitrepo_repo",
         "parameters": [
           {
             "name": "owner",
@@ -347,28 +303,6 @@
             "schema": {
               "type": "string",
               "title": "Repo"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -405,7 +339,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/branches": {
+    "/api/git-repo/{owner}/{repo}/branches": {
       "get": {
         "tags": [
           "git-repo"
@@ -442,28 +376,6 @@
               "default": 50,
               "title": "Per Page"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "responses": {
@@ -499,7 +411,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/commits": {
+    "/api/git-repo/{owner}/{repo}/commits": {
       "get": {
         "tags": [
           "git-repo"
@@ -536,28 +448,6 @@
               "default": 20,
               "title": "Per Page"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "responses": {
@@ -593,7 +483,165 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/contents/{path}": {
+    "/api/git-repo/{owner}/{repo}/tree": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库目录树（单层；GitHub 支持递归）",
+        "description": "取仓库目录树。\n\n- 单层（default）：透传 `git/trees/{ref}`，返回该层 tree+blob 条目（type/name/path/mode/sha）。\n- 递归（depth=recursive）：仅 GitHub 支持（`git/trees/{sha}?recursive=1`）；\n  GitCode 平台 recursive 返回破碎树（丢失 blob），故明确拒绝，避免产出残缺数据。\n- ref 空 → 自动解析默认分支。",
+        "operationId": "gitrepo_tree",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "分支/引用，空=默认分支",
+              "default": "",
+              "title": "Ref"
+            },
+            "description": "分支/引用，空=默认分支"
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "single(单层，默认)/recursive(递归，仅 GitHub)",
+              "default": "single",
+              "title": "Depth"
+            },
+            "description": "single(单层，默认)/recursive(递归，仅 GitHub)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/git-repo/{owner}/{repo}/contents": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库内容：根目录列表",
+        "description": "取仓库根目录条目列表（空 path → GitCode contents 返回根目录数组）。",
+        "operationId": "gitrepo_contents_root",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "分支/引用",
+              "default": "",
+              "title": "Ref"
+            },
+            "description": "分支/引用"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/git-repo/{owner}/{repo}/contents/{path}": {
       "get": {
         "tags": [
           "git-repo"
@@ -639,28 +687,6 @@
               "title": "Ref"
             },
             "description": "分支/引用"
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "responses": {
@@ -696,7 +722,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/labels": {
+    "/api/git-repo/{owner}/{repo}/labels": {
       "get": {
         "tags": [
           "git-repo"
@@ -720,28 +746,6 @@
             "schema": {
               "type": "string",
               "title": "Repo"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -801,28 +805,6 @@
               "type": "string",
               "title": "Repo"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -868,7 +850,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/milestones": {
+    "/api/git-repo/{owner}/{repo}/milestones": {
       "get": {
         "tags": [
           "git-repo"
@@ -902,28 +884,6 @@
               "type": "string",
               "default": "all",
               "title": "State"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -960,7 +920,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/issues": {
+    "/api/git-repo/{owner}/{repo}/issues": {
       "get": {
         "tags": [
           "git-repo"
@@ -1017,28 +977,6 @@
               "minimum": 1,
               "default": 50,
               "title": "Per Page"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -1098,28 +1036,6 @@
               "type": "string",
               "title": "Repo"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -1165,7 +1081,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/issues/{number}": {
+    "/api/git-repo/{owner}/{repo}/issues/{number}": {
       "get": {
         "tags": [
           "git-repo"
@@ -1198,28 +1114,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -1288,28 +1182,6 @@
               "type": "integer",
               "title": "Number"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -1355,7 +1227,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/issues/{number}/comments": {
+    "/api/git-repo/{owner}/{repo}/issues/{number}/comments": {
       "get": {
         "tags": [
           "git-repo"
@@ -1388,28 +1260,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -1478,28 +1328,6 @@
               "type": "integer",
               "title": "Number"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -1545,7 +1373,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/pulls": {
+    "/api/git-repo/{owner}/{repo}/pulls": {
       "get": {
         "tags": [
           "git-repo"
@@ -1602,28 +1430,6 @@
               "minimum": 1,
               "default": 50,
               "title": "Per Page"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -1683,28 +1489,6 @@
               "type": "string",
               "title": "Repo"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -1750,7 +1534,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/pulls/{number}": {
+    "/api/git-repo/{owner}/{repo}/pulls/{number}": {
       "get": {
         "tags": [
           "git-repo"
@@ -1783,28 +1567,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -1873,28 +1635,6 @@
               "type": "integer",
               "title": "Number"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -1940,7 +1680,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/pulls/{number}/merge": {
+    "/api/git-repo/{owner}/{repo}/pulls/{number}/merge": {
       "put": {
         "tags": [
           "git-repo"
@@ -1973,28 +1713,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -2031,7 +1749,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/pulls/{number}/comments": {
+    "/api/git-repo/{owner}/{repo}/pulls/{number}/comments": {
       "get": {
         "tags": [
           "git-repo"
@@ -2064,28 +1782,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -2154,28 +1850,6 @@
               "type": "integer",
               "title": "Number"
             }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
           }
         ],
         "requestBody": {
@@ -2221,7 +1895,7 @@
         ]
       }
     },
-    "/api/repos/{owner}/{repo}/pulls/{number}/files": {
+    "/api/git-repo/{owner}/{repo}/pulls/{number}/files": {
       "get": {
         "tags": [
           "git-repo"
@@ -2254,28 +1928,6 @@
             "schema": {
               "type": "integer",
               "title": "Number"
-            }
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
             }
           }
         ],
@@ -2345,6 +1997,16 @@
             "schema": {
               "type": "string",
               "title": "Repo"
+            }
+          },
+          {
+            "name": "issue_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Issue Number"
             }
           }
         ],
@@ -3088,7 +2750,7 @@
           "tasks"
         ],
         "summary": "我的任务列表",
-        "description": "任务中心：当前登录用户的待处理/已完成任务（可按 repo / 创建人过滤 / 按时间排序）。\n\nsort_order: desc（默认，最新在前）/ asc（最早在前）\nmode: default（状态优先 active→processing→completed，组内按时间）/ time（纯时间序）\ncreated_by_me: 'true' 时仅返回当前用户创建的任务（user_id 匹配，排除 user_id=0）\nassignee: 按创建人筛选（assignee 字段精确匹配）",
+        "description": "任务中心：当前登录用户的待处理/已完成任务（可按 repo / 创建人过滤 / 按时间排序）。\n\nsort_order: desc（默认，最新在前）/ asc（最早在前）\nmode: default（状态优先 active→processing→completed，组内按时间）/ time（纯时间序）\ncreated_by_me: 'true' 时仅返回当前用户创建的任务（user_id 匹配，排除 user_id=0）\nassignees: 按创建人筛选（assignee 字段精确匹配）",
         "operationId": "tasks_mine",
         "parameters": [
           {
@@ -3163,6 +2825,453 @@
               "title": "Assignees"
             },
             "description": "按创建人筛选(逗号分隔)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/tasks/repo/{owner}/{repo}": {
+      "get": {
+        "tags": [
+          "tasks"
+        ],
+        "summary": "仓库全部任务列表",
+        "description": "任务中心「仓库全部」视图：返回该仓库下所有任务（不限 user_id），含 assignee 信息。\n\n- 按 owner/repo 路径参数定位仓库（to_repo_key 归一化）\n- 先校验调用方可访问该仓库（get_managed_repos 成员校验，防 IDOR）\n- status 可选筛选（active/processing/awaiting_input/pending_review/completed/cancelled）\n- assignees 可选筛选（逗号分隔的创建人列表）\n- sort_order / mode 与 /mine 一致\n- 返回格式与 /mine 相同（额外含 user_id）",
+        "operationId": "tasks_repo_all",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(active|processing|awaiting_input|pending_review|completed|cancelled|)$",
+              "default": "",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(desc|asc)$",
+              "description": "按创建时间排序方向",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "按创建时间排序方向"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(default|time)$",
+              "description": "default=状态优先；time=纯时间序",
+              "default": "default",
+              "title": "Mode"
+            },
+            "description": "default=状态优先；time=纯时间序"
+          },
+          {
+            "name": "assignees",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按创建人筛选(逗号分隔)",
+              "default": "",
+              "title": "Assignees"
+            },
+            "description": "按创建人筛选(逗号分隔)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/issues/{owner}/{repo}": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "仓库 Issue 列表（含阶段/状态聚合）",
+        "operationId": "issues_list",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "创建 Issue（迁移自 /api/tasks/create）",
+        "description": "创建 Issue：复用 /api/tasks/create 逻辑（ensure_issue_task + GitCode create + 触发 pipeline）。\n\nbody: {repo_key?, title, description?, assignee?, scene_id?, is_subtask_mode?}\nrepo_key 可选（缺省按 {owner}/{repo} 拼）。返回 {ok, issue_number, task_id, created, ...}",
+        "operationId": "issues_create",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/issues/{owner}/{repo}/{number}": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "单个 Issue 详情（阶段+事件+pipeline）",
+        "operationId": "issues_detail",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/issues/{owner}/{repo}/{number}/events": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "该 Issue 的事件列表",
+        "operationId": "issues_events",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ]
+      }
+    },
+    "/api/issues/{owner}/{repo}/{number}/pipeline": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Issue pipeline 路线图",
+        "operationId": "issues_pipeline",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          },
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Number"
+            }
           }
         ],
         "responses": {
@@ -3767,208 +3876,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "apiKey": []
-          },
-          {
-            "privateKey": []
-          },
-          {
-            "accessToken": []
-          }
-        ]
-      }
-    },
-    "/api/repos/{owner}/{repo}/tree": {
-      "get": {
-        "tags": [
-          "git-repo"
-        ],
-        "summary": "仓库目录树（单层；GitHub 支持递归）",
-        "description": "取仓库目录树。\n\n- 单层（default）：透传 `git/trees/{ref}`，返回该层 tree+blob 条目（type/name/path/mode/sha）。\n- 递归（depth=recursive）：仅 GitHub 支持（`git/trees/{sha}?recursive=1`）；\n  GitCode 平台 recursive 返回破碎树（丢失 blob），故明确拒绝，避免产出残缺数据。\n- ref 空 → 自动解析默认分支。",
-        "operationId": "gitrepo_tree",
-        "parameters": [
-          {
-            "name": "owner",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Owner"
-            }
-          },
-          {
-            "name": "repo",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Repo"
-            }
-          },
-          {
-            "name": "ref",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "分支/引用，空=默认分支",
-              "default": "",
-              "title": "Ref"
-            },
-            "description": "分支/引用，空=默认分支"
-          },
-          {
-            "name": "depth",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "single(单层，默认)/recursive(递归，仅 GitHub)",
-              "default": "single",
-              "title": "Depth"
-            },
-            "description": "single(单层，默认)/recursive(递归，仅 GitHub)"
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "apiKey": []
-          },
-          {
-            "privateKey": []
-          },
-          {
-            "accessToken": []
-          }
-        ]
-      }
-    },
-    "/api/repos/{owner}/{repo}/contents": {
-      "get": {
-        "tags": [
-          "git-repo"
-        ],
-        "summary": "仓库内容：根目录列表",
-        "description": "取仓库根目录条目列表（空 path → GitCode contents 返回根目录数组）。",
-        "operationId": "gitrepo_contents_root",
-        "parameters": [
-          {
-            "name": "owner",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Owner"
-            }
-          },
-          {
-            "name": "repo",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Repo"
-            }
-          },
-          {
-            "name": "ref",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "分支/引用",
-              "default": "",
-              "title": "Ref"
-            },
-            "description": "分支/引用"
-          },
-          {
-            "name": "provider",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "description": "gitcode/github/gitlab，缺省 gitcode",
-              "default": "",
-              "title": "Provider"
-            },
-            "description": "gitcode/github/gitlab，缺省 gitcode"
-          },
-          {
-            "name": "X-Git-Provider",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": "",
-              "title": "X-Git-Provider"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4841,6 +4748,27 @@
         "type": "object",
         "title": "GitCodeRepoConfig"
       },
+      "GitHubOAuthConfig": {
+        "properties": {
+          "github_oauth_client_id": {
+            "type": "string",
+            "title": "Github Oauth Client Id",
+            "default": ""
+          },
+          "github_oauth_client_secret": {
+            "type": "string",
+            "title": "Github Oauth Client Secret",
+            "default": ""
+          },
+          "github_oauth_redirect_uri": {
+            "type": "string",
+            "title": "Github Oauth Redirect Uri",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "GitHubOAuthConfig"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4887,6 +4815,11 @@
           "load_avg": {
             "type": "string",
             "title": "Load Avg",
+            "default": ""
+          },
+          "spec": {
+            "type": "string",
+            "title": "Spec",
             "default": ""
           },
           "log_lines": {
@@ -5669,6 +5602,11 @@
           "codearts_sk": {
             "type": "string",
             "title": "Codearts Sk",
+            "default": ""
+          },
+          "github_token": {
+            "type": "string",
+            "title": "Github Token",
             "default": ""
           },
           "repo_key": {
