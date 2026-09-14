@@ -51,6 +51,33 @@ def test_http_error_exposes_server_message(monkeypatch, fake_httpx):
     assert "boom" in str(e.value)
 
 
+def test_new_envelope_detail_message_parsed(monkeypatch, fake_httpx):
+    # 服务端新格式：{"detail": {"code","message"}}（message 英文）
+    fake_httpx({"/api/x": (404, {"detail": {"code": 40401, "message": "Not Found"}})})
+    with pytest.raises(CliError) as e:
+        ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
+    assert e.value.code == 404
+    assert "Not Found" in str(e.value)
+    assert "40401" in str(e.value)
+
+
+def test_401_uses_server_message(monkeypatch, fake_httpx):
+    fake_httpx({"/api/x": (401, {"detail": {"code": 401, "message": "Unauthorized"}})})
+    with pytest.raises(CliError) as e:
+        ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
+    assert e.value.code == 401
+    assert "Unauthorized" in str(e.value)
+    assert "re-inject GRAPE_SESSION_TOKEN" in str(e.value)
+
+
+def test_401_fallback_english_message(monkeypatch, fake_httpx):
+    # 无 message 字段 → 用缺省英文提示
+    fake_httpx({"/api/x": (401, {})})
+    with pytest.raises(CliError) as e:
+        ApiClient(base_url="http://x", token="t").request("GET", "/api/x")
+    assert "token invalid or expired" in str(e.value)
+
+
 def test_connect_error_maps_to_clierror(monkeypatch, fake_httpx):
     def _conn_raises(method, url, kwargs):
         raise httpx.ConnectError("no route")

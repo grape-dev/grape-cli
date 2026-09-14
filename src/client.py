@@ -54,18 +54,30 @@ class ApiClient:
             )
         except httpx.HTTPError as e:
             raise CliError(f"HTTP error: {self.base_url}{path} ({e})")
-        if r.status_code == 401:
-            raise CliError(
-                "authentication failed: token invalid or expired; "
-                "re-inject GRAPE_SESSION_TOKEN / GRAPE_API_TOKEN",
-                code=401,
-            )
         try:
             data = r.json()
         except Exception:
             data = r.text
+        # 解析服务端错误信封：新格式 {"detail": {"code","message"}}（message 英文约定）
+        # 兼容旧格式 {"message": ...} 与纯文本
+        msg = ""
+        detail_code = r.status_code
+        if isinstance(data, dict):
+            _d = data.get("detail")
+            if isinstance(_d, dict):
+                msg = str(_d.get("message") or "")
+                detail_code = _d.get("code") or r.status_code
+            else:
+                msg = str(data.get("message") or "")
+        elif isinstance(data, str):
+            msg = data
+        if r.status_code == 401:
+            raise CliError(
+                f"authentication failed: {msg or 'token invalid or expired'}; "
+                "re-inject GRAPE_SESSION_TOKEN / GRAPE_API_TOKEN",
+                code=r.status_code,
+            )
         if r.status_code >= 400:
-            msg = data.get("message") if isinstance(data, dict) else str(data)
             hint = ""
             if r.status_code == 403 and path.startswith("/api/repos"):
                 hint = " (git-repo API: session token (tk_) only; check repo write permission)"
@@ -74,7 +86,11 @@ class ApiClient:
                     hint = " (path not found; try --path '' to list root)"
                 else:
                     hint = " (check owner/repo/number)"
-            raise CliError(f"HTTP {r.status_code}: {msg or 'request failed'}{hint}", code=r.status_code)
+            code_txt = f" ({detail_code})" if detail_code != r.status_code else ""
+            raise CliError(
+                f"HTTP {r.status_code}{code_txt}: {msg or 'request failed'}{hint}",
+                code=r.status_code,
+            )
         return r.status_code, data
 
 
