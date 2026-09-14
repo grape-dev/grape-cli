@@ -45,21 +45,45 @@ def wait_command() -> click.Command:
 class ContractGroup(click.Group):
     """加载 /openapi.json 动态生成命令组（方案 B）：新增契约 → 自动获得命令。"""
 
-    # ---- 帮助类别分组（借鉴 git 按意图分组）----
+    # ---- 帮助类别分组（按意图 × 读写角色，docs/grape-help-category-redesign.md）----
     CATEGORY_MAP = {
-        "tasks": "Work with tasks",
-        "git": "Work with repositories (git)",
-        "git-repo": "Work with repositories (git)",
-        "skills": "Skills & knowledge",
-        "knowledge": "Skills & knowledge",
+        # Core workflows：agent 驱动的流程（会变更）
+        "tasks": "Core workflows",
+        "a2a": "Core workflows",
+        # Agent Context：执行 agent 只读上下文（改状态属 user 层）
+        "issues": "Agent Context",
+        "events": "Agent Context",
+        "knowledge": "Agent Context",
+        # Code & repositories
+        "git": "Code & repositories",
+        "git-repo": "Code & repositories",
+        # Account & platform：用户级平台资源（管理导向，含 skills/scenes）
+        "agents": "Account & platform",
+        "auth": "Account & platform",
+        "chat": "Account & platform",
+        "repos": "Account & platform",
+        "scenes": "Account & platform",
+        "skills": "Account & platform",
+        # CLI utilities：元命令
+        "api": "CLI utilities",
+        "commands": "CLI utilities",
+        "refresh": "CLI utilities",
     }
     CATEGORY_ORDER = [
-        "Work with tasks",
-        "Work with repositories (git)",
-        "Skills & knowledge",
-        "Explore the platform",
+        "Core workflows",
+        "Agent Context",
+        "Code & repositories",
+        "Account & platform",
+        "CLI utilities",
     ]
-    DEFAULT_CATEGORY = "Explore the platform"
+    DEFAULT_CATEGORY = "Account & platform"
+    CATEGORY_INTRO = {
+        "Core workflows": "task actions & agent handoffs",
+        "Agent Context": "read-only context — issue/events/knowledge; state changes are user-level",
+        "Code & repositories": "run git locally / platform repo API",
+        "Account & platform": "user-level platform resources (incl. skills/scenes)",
+        "CLI utilities": "manage the contract & commands",
+    }
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -87,7 +111,9 @@ class ContractGroup(click.Group):
                 max_name = max(len(n) for n, _ in items)
                 limit = formatter.width - 10 - max_name
                 rows = [(n, c.get_short_help_str(limit)) for n, c in items]
-                formatter.write_text(f"{cat}:")
+                intro = self.CATEGORY_INTRO.get(cat)
+                header = f"{cat} ({intro}):" if intro else f"{cat}:"
+                formatter.write_text(header)
                 formatter.write_dl(rows)
                 formatter.write_paragraph()
 

@@ -47,9 +47,19 @@ def test_help_categories(env, fake_httpx, standard_router):
     fake_httpx(standard_router)
     res = CliRunner().invoke(cli, ["--help"])
     assert res.exit_code == 0
-    for cat in ("Work with tasks", "Work with repositories (git)",
-                "Skills & knowledge", "Explore the platform"):
+    for cat in ("Core workflows", "Code & repositories",
+                "Account & platform", "CLI utilities"):
         assert cat in res.output
+
+
+def test_help_categories_agent_context_with_bundled(env, fake_httpx):
+    """bundled 契约含 issues/events/knowledge → Agent Context 分类出现。"""
+    fake_httpx({})  # 全部 404 → 契约回退 bundled
+    res = CliRunner().invoke(cli, ["--help"])
+    assert res.exit_code == 0
+    assert "Agent Context" in res.output
+    assert "issues" in res.output
+    assert "knowledge" in res.output
 
 
 def test_help_lists_builtins(env):
