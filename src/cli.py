@@ -69,8 +69,8 @@ class ContractGroup(click.Group):
     }
     CATEGORY_ORDER = [
         "Core workflows",
-        "Agent Context",
         "Code & repositories",
+        "Agent Context",
         "Account & platform",
         "CLI utilities",
     ]

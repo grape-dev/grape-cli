@@ -70,14 +70,14 @@ Commands:
     tasks   mine/notify/status/complete/clarify/repo/...
     a2a     handoff
 
+  Code & repositories (run git locally / platform repo API):
+    git        Run git locally ...
+    git-repo   Platform API by grape ...
+
   Agent Context (read-only context — issue/events/knowledge; state changes are user-level):
     issues    detail/events/list/pipeline · create(入口)
     events    detail
     knowledge content/context/list/stats/detail
-
-  Code & repositories (run git locally / platform repo API):
-    git        Run git locally ...
-    git-repo   Platform API by grape ...
 
   Account & platform (user-level platform resources; management-oriented incl. skills/scenes):
     agents / auth / chat / repos / scenes / skills
