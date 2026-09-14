@@ -50,6 +50,8 @@ def test_help_categories(env, fake_httpx, standard_router):
     for cat in ("Core workflows", "Code & repositories",
                 "Account & platform", "CLI utilities"):
         assert cat in res.output
+    assert "session-only" in res.output
+    assert "session tk_ rejected" in res.output
 
 
 def test_help_categories_agent_context_with_bundled(env, fake_httpx):

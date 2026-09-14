@@ -122,6 +122,34 @@ def _example_args(meta: dict, path_params: list[str], query_params: list[str],
     return [" ".join(parts)]
 
 
+# ---- token 作用域（docs/grape-token-scope-help.md）----
+_TOKEN_SCOPE: dict | None = None
+
+
+def _load_token_scope() -> dict:
+    """懒加载 token-scope.json：{user_only: [...], session_only: [...]}。"""
+    global _TOKEN_SCOPE
+    if _TOKEN_SCOPE is None:
+        try:
+            _TOKEN_SCOPE = json.loads(
+                files("src").joinpath("data", "token-scope.json").read_text(encoding="utf-8")
+            )
+        except Exception:
+            _TOKEN_SCOPE = {}
+    return _TOKEN_SCOPE
+
+
+def _token_scope(meta: dict) -> str:
+    """operationId 的作用域：user_only(D, session→403) / session_only(C) / allow。"""
+    oid = meta.get("operationId") or ""
+    m = _load_token_scope()
+    if oid in m.get("user_only", []):
+        return "user_only"
+    if oid in m.get("session_only", []) or oid.startswith("gitrepo_"):
+        return "session_only"
+    return "allow"
+
+
 def _read_json_arg(raw) -> str:
     """--json 入参读取：`@file.json` 读文件、`@-` 读 stdin，其余原样返回。"""
     if isinstance(raw, str) and raw.startswith("@"):
@@ -199,7 +227,17 @@ def build_command(meta: dict) -> click.Command:
                     f"(allowed fields: {', '.join(body_fields)})"
                 )
             _validate_body(meta, body, body_fields)
-        _status, data = api.request(method, url, params=params, json_body=body)
+        try:
+            _status, data = api.request(method, url, params=params, json_body=body)
+        except CliError as e:
+            # D 类（user_only）：会话 token 403 时追加英文行动指引，帮 agent 立即换钥
+            if e.code == 403 and _token_scope(meta) == "user_only":
+                raise CliError(
+                    f"{e}; use GRAPE_API_TOKEN / Web JWT — "
+                    "session token (tk_) is rejected for this scope",
+                    code=403,
+                )
+            raise
         click.echo(json.dumps(data, ensure_ascii=False,
                               indent=None if kw.get("json_out") else 2))
 
@@ -210,9 +248,16 @@ def build_command(meta: dict) -> click.Command:
         desc = ""
     has_body_flag = "yes" if has_body else "no"
     method_path = f"Invoke grape API: {method} {path}"
-    # 首行=实际含义 + 方法与是否需要 body（短帮助/命令列表直接展示）
-    first = f"{summary or f'{method} {path}'} ({method}, body: {has_body_flag})"
+    scope = _token_scope(meta)
+    scope_suffix = {"user_only": " (session 403 → grape_/JWT)",
+                    "session_only": " (session-only)"}.get(scope, "")
+    # 首行=实际含义 + 方法与是否需要 body + token 作用域（短帮助/命令列表直接展示）
+    first = f"{summary or f'{method} {path}'} ({method}, body: {has_body_flag}){scope_suffix}"
     help_lines = [first, "", method_path]
+    if scope == "user_only":
+        help_lines.append("Token scope: session (tk_) → 403; use GRAPE_API_TOKEN / Web JWT")
+    elif scope == "session_only":
+        help_lines.append("Token scope: session (tk_) only; API key / JWT → 403")
     body_fields = _body_fields(meta)
     if body_fields:
         help_lines.append(f"Body fields: {', '.join(body_fields)}")

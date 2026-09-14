@@ -232,6 +232,57 @@ def test_other_required_path_param_still_enforced(monkeypatch, fake_httpx):
     assert "Missing required parameter --number" in str(res.exception)
 
 
+def test_d_scope_403_appends_user_key_hint(monkeypatch, fake_httpx):
+    """D 类（user_only）403 → 追加英文行动指引。"""
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({"/api/skills": (403, {"message": "该接口不支持会话 token"})})
+    skills = cli.get_command(None, "skills").commands["list"]
+    res = CliRunner().invoke(skills, [])
+    assert isinstance(res.exception, CliError)
+    assert res.exception.code == 403
+    assert "use GRAPE_API_TOKEN / Web JWT" in str(res.exception)
+    assert "session token (tk_) is rejected" in str(res.exception)
+
+
+def test_allow_scope_403_not_appended(monkeypatch, fake_httpx):
+    """非 D 类 403 → 不追加 user key 指引（原样）。"""
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({"/api/tasks/mine": (403, {"message": "forbidden"})})
+    mine = cli.get_command(None, "tasks").commands["mine"]
+    res = CliRunner().invoke(mine, [])
+    assert isinstance(res.exception, CliError)
+    assert res.exception.code == 403
+    assert "use GRAPE_API_TOKEN" not in str(res.exception)
+
+
+def test_command_help_marks_token_scope():
+    """#2：user_only / session_only 命令帮助带作用域标识；allow 不带。"""
+    from src.contracts import load_bundled
+
+    g = build_groups(load_bundled())
+    skills_list = g["skills"].commands["list"]
+    assert "session 403 → grape_/JWT" in skills_list.help
+    assert "Token scope: session (tk_) → 403" in skills_list.help
+
+    branches = g["git-repo"].commands["branches"]
+    assert "session-only" in branches.help
+    assert "session (tk_) only" in branches.help
+
+    mine = g["tasks"].commands["mine"]
+    assert "session-only" not in mine.help
+    assert "session 403" not in mine.help
+
+
 def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):
     from click.testing import CliRunner
     from src.cli import cli
