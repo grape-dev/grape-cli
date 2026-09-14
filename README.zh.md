@@ -46,7 +46,6 @@ grape CLI 是 [Grape](https://gitcode.com/grape-dev/grape) 平台的命令行客
 - **三通道认证** — Bearer / `PRIVATE-TOKEN` / `?access_token=`，自动注入
 - **本地 git 透传** — `grape git --repo owner/repo ...`，凭据经 `GIT_CONFIG` 注入
 - **内置 `tasks wait`** — 轮询任务直至终态（`completed` / `failed` / `cancelled`）
-- **通用 `api` 兜底** — 直接调用尚未生成命令的任意契约端点
 - **机器可读输出** — `--json-out` 输出单行 JSON，供 worker 解析
 
 ## 安装
@@ -85,7 +84,7 @@ python3 -m venv /opt/grape-cli
 ### 全局
 
 ```bash
-grape --help                  # 命令组 + 内置（git/api/refresh/commands）
+grape --help                  # 命令组 + 内置（git/refresh/commands）
 grape commands [pattern]      # 列出全部契约命令，可管道过滤：grape commands | grep issue
 grape refresh                 # 强制拉取最新 OpenAPI 契约并缓存
 grape tasks wait --task-id 56 --timeout 120 --interval 3   # 轮询任务至终态
@@ -120,15 +119,6 @@ grape git pull
 grape git push
 grape git checkout -b feat/issue-7
 grape git commit -m "fix: ..."
-```
-
-### api（通用兜底）
-
-契约未覆盖/特殊场景：
-
-```bash
-grape api GET /api/scenes
-grape api POST /api/tasks/create -d '{"repo_key":"o/r","title":"x"}'
 ```
 
 ## 快速开始

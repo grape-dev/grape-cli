@@ -65,7 +65,7 @@ def test_help_categories_agent_context_with_bundled(env, fake_httpx):
 def test_help_lists_builtins(env):
     res = CliRunner().invoke(cli, ["--help"])
     assert res.exit_code == 0
-    for name in ("git", "api", "refresh", "commands"):
+    for name in ("git", "refresh", "commands"):
         assert name in res.output
 
 
@@ -136,13 +136,6 @@ def test_wait_polls_until_terminal(env, fake_httpx, sample_schema):
     assert json.loads(res.output)["status"] == "completed"
 
 
-def test_api_fallback(env, fake_httpx, standard_router):
-    fake_httpx(standard_router)
-    res = CliRunner().invoke(cli, ["api", "GET", "/api/scenes"])
-    assert res.exit_code == 0
-    assert json.loads(res.output)["scenes"] == ["s1", "s2"]
-
-
 def test_commands_help_hints_pattern_filter(env):
     res = CliRunner().invoke(cli, ["commands", "--help"])
     assert res.exit_code == 0
@@ -187,7 +180,8 @@ def test_missing_token_fails_readably(monkeypatch, isolate_config):
 
     monkeypatch.delenv("GRAPE_SESSION_TOKEN", raising=False)
     monkeypatch.delenv("GRAPE_API_TOKEN", raising=False)
-    res = CliRunner().invoke(cli, ["api", "GET", "/api/scenes"])
+    res = CliRunner().invoke(cli, ["git-repo", "issues", "get",
+                                   "--owner", "o", "--repo", "r", "--number", "1"])
     assert res.exit_code != 0
     assert isinstance(res.exception, CliError)
     assert "token" in str(res.exception)

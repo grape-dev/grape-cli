@@ -1,4 +1,4 @@
-"""grape CLI 入口：契约驱动命令 + 内置（git/api/refresh/commands/wait）。"""
+"""grape CLI 入口：契约驱动命令 + 内置（git/refresh/commands/wait）。"""
 import json
 import sys
 import time
@@ -7,7 +7,6 @@ import click
 
 from src import __version__, config
 from src.client import ApiClient, CliError
-from src.commands.api import api_command
 from src.commands.git import git_command
 from src.contracts import load_contract
 from src.registry import build_groups, command_tree
@@ -65,7 +64,6 @@ class ContractGroup(click.Group):
         "scenes": "Account & platform",
         "skills": "Account & platform",
         # CLI utilities：元命令
-        "api": "CLI utilities",
         "commands": "CLI utilities",
         "refresh": "CLI utilities",
     }
@@ -225,9 +223,6 @@ def commands_cmd(pattern: str):
     if not lines:
         click.echo("no contract commands matched (run grape refresh or check base_url/token)")
 
-
-api_cmd = api_command()
-cli.add_command(api_cmd)
 
 git_cmd = git_command()
 cli.add_command(git_cmd)

@@ -47,7 +47,6 @@ tokens leaking into shell history:
 - **Three auth channels** — Bearer / `PRIVATE-TOKEN` / `?access_token=`, injected automatically
 - **Native git passthrough** — `grape git --repo owner/repo ...` with `GIT_CONFIG`-injected credentials
 - **Built-in `tasks wait`** — poll a task until a terminal state (`completed` / `failed` / `cancelled`)
-- **Generic `api` fallback** — call any contract endpoint you haven't generated a command for
 - **Machine-readable output** — `--json-out` for single-line JSON consumed by workers
 
 ## Install
@@ -86,7 +85,7 @@ Precedence (highest first):
 ### Global
 
 ```bash
-grape --help                  # contract groups + built-ins (git/api/refresh/commands)
+grape --help                  # contract groups + built-ins (git/refresh/commands)
 grape commands [pattern]      # list contract commands; pipe to filter: grape commands | grep issue
 grape refresh                 # force re-fetch the latest OpenAPI contract and cache it
 grape tasks wait --task-id 56 --timeout 120 --interval 3   # poll until terminal state
@@ -123,15 +122,6 @@ grape git pull
 grape git push
 grape git checkout -b feat/issue-7
 grape git commit -m "fix: ..."
-```
-
-### api (generic fallback)
-
-For endpoints not covered by the contract:
-
-```bash
-grape api GET /api/scenes
-grape api POST /api/tasks/create -d '{"repo_key":"o/r","title":"x"}'
 ```
 
 ## Quick Start
