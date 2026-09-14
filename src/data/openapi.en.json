@@ -36,7 +36,6 @@
   "a2a_handoff": "Agent handoff (A2A)",
   "scenes_list": "List scenes",
   "tasks_start": "Open a task session",
-  "tasks_create": "Create task (also opens a GitCode Issue)",
   "tasks_status": "Update task status",
   "tasks_status_get": "Query task status (for tasks wait)",
   "tasks_complete": "Mark task complete (grape tasks complete)",

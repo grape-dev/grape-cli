@@ -1,6 +1,5 @@
 {
   "tasks_mine": "--status active --json-out",
-  "tasks_create": "--json '{\"repo_key\":\"owner/repo\",\"title\":\"<title>\",\"description\":\"<desc>\"}'",
   "tasks_complete": "--json '{\"result_text\":\"<summary>\",\"next_step\":\"a2a_issue\"}'",
   "tasks_status": "--task_id 7 --json '{\"status\":\"processing\"}'",
   "tasks_status_get": "--task_id 7 --json-out",
@@ -53,6 +52,11 @@
   "chat_messages": "--conversation_id <id> --json-out",
   "repos_member": "--json-out",
   "repos_managed": "--json-out",
+  "repos_deploy_url": "--owner o --repo r --json-out",
   "knowledge_list": "--json-out",
+  "knowledge_content": "--knowledge_id <id> --json-out",
+  "knowledge_context": "--json-out",
+  "knowledge_detail": "--knowledge_id <id> --json-out",
+  "knowledge_stats": "--json-out",
   "auth_profile_get": "--json-out"
 }

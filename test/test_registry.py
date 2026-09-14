@@ -107,11 +107,11 @@ def test_generated_command_help_marks_method_and_body(sample_schema):
 
 def test_generated_command_help_has_example(sample_schema):
     ops = parse_operations(sample_schema)
-    op = next(o for o in ops if o["operationId"] == "tasks_create")
+    op = next(o for o in ops if o["operationId"] == "gitrepo_issues_list")
     cmd = build_command(op)
     assert "Examples:" in cmd.help
-    assert "grape tasks create" in cmd.help
-    assert "--json" in cmd.help
+    assert "grape git-repo issues list" in cmd.help
+    assert "--owner" in cmd.help
 
 
 def test_contents_help_has_bidirectional_examples():

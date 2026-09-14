@@ -2008,6 +2008,45 @@
               "default": "",
               "title": "Issue Number"
             }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "事件关键词搜索（seq/issue_id/event_type/title/summary/actor）",
+              "default": "",
+              "title": "Keyword"
+            },
+            "description": "事件关键词搜索（seq/issue_id/event_type/title/summary/actor）"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "页码，从 1 开始",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "页码，从 1 开始"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "每页条数",
+              "default": 10,
+              "title": "Page Size"
+            },
+            "description": "每页条数"
           }
         ],
         "responses": {
@@ -2530,57 +2569,6 @@
         ]
       }
     },
-    "/api/tasks/create": {
-      "post": {
-        "tags": [
-          "tasks"
-        ],
-        "summary": "新建任务（同步建 GitCode Issue）",
-        "description": "Task Center 新建任务：同步在 GitCode 仓库创建 Issue，并按既有流程建档。\n\n- issue 责任人 = 系统 General Settings 的 Account（settings.credentials.gitcode.account，\n  即当前登录用户 gitcode 账号；也可显式传 assignee 覆盖）\n- 幂等：同仓库同标题的 open issue 存在 → 复用（不重复创建）；\n  同一 issue 的任务 id 不重复（ensure_issue_task 幂等）\n- 状态迁移：task 支持 active/processing/completed/cancelled（PUT /api/tasks/{id}/status）",
-        "operationId": "tasks_create",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskCreateBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "apiKey": []
-          },
-          {
-            "privateKey": []
-          },
-          {
-            "accessToken": []
-          }
-        ]
-      }
-    },
     "/api/tasks/{task_id}/status": {
       "put": {
         "tags": [
@@ -3033,8 +3021,8 @@
         "tags": [
           "issues"
         ],
-        "summary": "创建 Issue（迁移自 /api/tasks/create）",
-        "description": "创建 Issue：复用 /api/tasks/create 逻辑（ensure_issue_task + GitCode create + 触发 pipeline）。\n\nbody: {repo_key?, title, description?, assignee?, scene_id?, is_subtask_mode?}\nrepo_key 可选（缺省按 {owner}/{repo} 拼）。返回 {ok, issue_number, task_id, created, ...}",
+        "summary": "创建 Issue（对外唯一创建入口）",
+        "description": "创建 Issue：复用 create_task_via_issue 逻辑（ensure_issue_task + GitCode create + 触发 pipeline）。\n\nPOST /api/tasks/create 已废弃移除（Phase C2），本端点为对外唯一创建入口。\n\nbody: {repo_key?, title, description?, assignee?, scene_id?, is_subtask_mode?}\nrepo_key 可选（缺省按 {owner}/{repo} 拼）。返回 {ok, issue_number, task_id, created, ...}",
         "operationId": "issues_create",
         "parameters": [
           {
@@ -5465,42 +5453,6 @@
         },
         "type": "object",
         "title": "TaskConfirmBody"
-      },
-      "TaskCreateBody": {
-        "properties": {
-          "repo_key": {
-            "type": "string",
-            "title": "Repo Key",
-            "default": ""
-          },
-          "title": {
-            "type": "string",
-            "title": "Title",
-            "default": ""
-          },
-          "description": {
-            "type": "string",
-            "title": "Description",
-            "default": ""
-          },
-          "assignee": {
-            "type": "string",
-            "title": "Assignee",
-            "default": ""
-          },
-          "scene_id": {
-            "type": "string",
-            "title": "Scene Id",
-            "default": ""
-          },
-          "is_subtask_mode": {
-            "type": "integer",
-            "title": "Is Subtask Mode",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "TaskCreateBody"
       },
       "TaskNotifyBody": {
         "properties": {
