@@ -77,7 +77,7 @@ class ContractGroup(click.Group):
     DEFAULT_CATEGORY = "Account & platform"
     CATEGORY_INTRO = {
         "Core workflows": "task actions & agent handoffs",
-        "Agent Context": "read-only context — issue/events/knowledge",
+        "Agent Context": "issue / events / knowledge",
         "Code & repositories": "run git locally / platform repo API",
         "Account & platform": "user-level platform resources",
         "CLI utilities": "manage the contract & commands",
