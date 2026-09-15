@@ -111,8 +111,11 @@ class ContractGroup(click.Group):
                 rows = [(n, c.get_short_help_str(limit)) for n, c in items]
                 intro = self.CATEGORY_INTRO.get(cat)
                 header = f"{cat} ({intro}):" if intro else f"{cat}:"
+                # git 风格：分类说明单独一段，其下命令名对齐成列并缩进一级
                 formatter.write_text(header)
-                formatter.write_dl(rows)
+                with formatter.indentation():
+                    formatter.write_dl(rows)
+                formatter.write_paragraph()
                 formatter.write_paragraph()
 
     def _ensure(self, refresh: bool = False):
