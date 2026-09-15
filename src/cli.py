@@ -76,10 +76,10 @@ class ContractGroup(click.Group):
     ]
     DEFAULT_CATEGORY = "Account & platform"
     CATEGORY_INTRO = {
-        "Core workflows": "task actions & agent handoffs (session ok)",
-        "Agent Context": "read-only context — issue/events/knowledge (session ok)",
-        "Code & repositories": "run git locally / platform repo API (session-only)",
-        "Account & platform": "user-level platform resources (session tk_ rejected on some → use GRAPE_API_TOKEN/JWT)",
+        "Core workflows": "task actions & agent handoffs",
+        "Agent Context": "read-only context — issue/events/knowledge",
+        "Code & repositories": "run git locally / platform repo API",
+        "Account & platform": "user-level platform resources",
         "CLI utilities": "manage the contract & commands",
     }
 
