@@ -9,7 +9,7 @@ from src import __version__, config
 from src.client import ApiClient, CliError
 from src.commands.git import git_command
 from src.contracts import load_contract
-from src.registry import build_groups, command_tree
+from src.registry import _cmd_allowed, build_groups, command_tree
 
 
 def wait_command() -> click.Command:
@@ -96,6 +96,8 @@ class ContractGroup(click.Group):
         for name in self.list_commands(ctx):
             cmd = self.get_command(ctx, name)
             if cmd is None or getattr(cmd, "hidden", False):
+                continue
+            if not _cmd_allowed(cmd):
                 continue
             cat = self.CATEGORY_MAP.get(name, self.DEFAULT_CATEGORY)
             rows_by_cat.setdefault(cat, []).append((name, cmd))
@@ -187,8 +189,9 @@ def _walk_commands(grp, prefix, out):
         cmd = grp.commands[name]
         full = f"{prefix} {name}"
         if isinstance(cmd, click.Group):
-            _walk_commands(cmd, full, out)
-        else:
+            if _cmd_allowed(cmd):
+                _walk_commands(cmd, full, out)
+        elif _cmd_allowed(cmd):
             out.append(full)
 
 
@@ -238,7 +241,11 @@ def commands_cmd(pattern: str):
         click.echo("no contract commands matched (run grape refresh or check base_url/token)")
 
 
+refresh_cmd.token_scope = "dual"
+commands_cmd.token_scope = "dual"
+
 git_cmd = git_command()
+git_cmd.token_scope = "session_only"
 cli.add_command(git_cmd)
 
 

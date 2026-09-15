@@ -33,7 +33,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/repos/member": {
@@ -64,7 +65,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/repos/managed": {
@@ -94,7 +96,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/repos/deploy-url/{owner}/{repo_name}": {
@@ -155,7 +158,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/repos/{owner}/{repo}/git-credential": {
@@ -216,7 +220,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/repos/{owner}/{repo}/workspace": {
@@ -276,7 +281,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}": {
@@ -336,7 +342,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/branches": {
@@ -408,7 +415,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/commits": {
@@ -480,7 +488,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/tree": {
@@ -565,7 +574,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/contents": {
@@ -638,7 +648,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/contents/{path}": {
@@ -719,7 +730,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/labels": {
@@ -779,7 +791,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "post": {
         "tags": [
@@ -847,7 +860,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/milestones": {
@@ -917,7 +931,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/issues": {
@@ -1010,7 +1025,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "post": {
         "tags": [
@@ -1078,7 +1094,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/issues/{number}": {
@@ -1147,7 +1164,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "patch": {
         "tags": [
@@ -1224,7 +1242,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/issues/{number}/comments": {
@@ -1293,7 +1312,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "post": {
         "tags": [
@@ -1370,7 +1390,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/pulls": {
@@ -1463,7 +1484,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "post": {
         "tags": [
@@ -1531,7 +1553,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/pulls/{number}": {
@@ -1600,7 +1623,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "patch": {
         "tags": [
@@ -1677,7 +1701,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/pulls/{number}/merge": {
@@ -1746,7 +1771,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/pulls/{number}/comments": {
@@ -1815,7 +1841,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       },
       "post": {
         "tags": [
@@ -1892,7 +1919,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/git-repo/{owner}/{repo}/pulls/{number}/files": {
@@ -1961,7 +1989,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "session_only"
       }
     },
     "/api/agents/{name}/{owner}/{repo}": {
@@ -2079,7 +2108,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/events/detail/{seq}": {
@@ -2130,7 +2160,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/chat/conversations": {
@@ -2182,7 +2213,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/chat/messages/{conv_id}": {
@@ -2244,7 +2276,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills": {
@@ -2347,7 +2380,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/by-id/{skill_id}": {
@@ -2409,7 +2443,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       },
       "delete": {
         "tags": [
@@ -2479,7 +2514,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/a2a": {
@@ -2531,7 +2567,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/scenes": {
@@ -2584,7 +2621,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/{task_id}/start": {
@@ -2636,7 +2674,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/{task_id}/status": {
@@ -2698,7 +2737,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       },
       "get": {
         "tags": [
@@ -2748,7 +2788,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/complete": {
@@ -2799,7 +2840,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/mine": {
@@ -2915,7 +2957,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/repo/{owner}/{repo}": {
@@ -3025,7 +3068,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/issues/{owner}/{repo}": {
@@ -3085,7 +3129,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       },
       "post": {
         "tags": [
@@ -3155,7 +3200,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/issues/{owner}/{repo}/{number}": {
@@ -3224,7 +3270,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/issues/{owner}/{repo}/{number}/events": {
@@ -3293,7 +3340,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/issues/{owner}/{repo}/{number}/pipeline": {
@@ -3362,7 +3410,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/knowledge": {
@@ -3489,7 +3538,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/knowledge/stats": {
@@ -3542,7 +3592,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/knowledge/content": {
@@ -3615,7 +3666,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/knowledge/context": {
@@ -3698,7 +3750,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/knowledge/{knowledge_id}": {
@@ -3750,7 +3803,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "dual"
       }
     },
     "/api/tasks/notify": {
@@ -3903,7 +3957,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/tasks/{task_id}/clarify": {
@@ -3964,7 +4019,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/featured": {
@@ -4017,7 +4073,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/stats": {
@@ -4048,7 +4105,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/search": {
@@ -4101,7 +4159,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/{skill_id}/sub": {
@@ -4153,7 +4212,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/{skill_id}/sub/{sub_name}": {
@@ -4214,7 +4274,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/package-sub/{pkg_id}/{sub_name}": {
@@ -4275,7 +4336,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/by-id/{skill_id}/download": {
@@ -4337,7 +4399,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/convert": {
@@ -4388,7 +4451,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/{skill_id}/like": {
@@ -4440,7 +4504,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     },
     "/api/skills/upload": {
@@ -4491,7 +4556,8 @@
           {
             "accessToken": []
           }
-        ]
+        ],
+        "x-token-scope": "user_only"
       }
     }
   },

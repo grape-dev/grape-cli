@@ -10,6 +10,7 @@
 import base64
 import difflib
 import json
+import os
 import re
 from importlib.resources import files
 
@@ -145,14 +146,47 @@ def _load_token_scope() -> dict:
 
 
 def _token_scope(meta: dict) -> str:
-    """operationId 的作用域：user_only(D, session→403) / session_only(C) / allow。"""
+    """operationId/op 的作用域：dual / user_only(D, session→403) / session_only(C)。
+
+    优先读契约 `op.x-token-scope`（服务端权威），缺省回落静态表与 `gitrepo_*` 前缀。
+    """
+    _op = meta.get("op") or {}
+    xs = _op.get("x-token-scope")
+    if xs in ("dual", "user_only", "session_only"):
+        return xs
     oid = meta.get("operationId") or ""
     m = _load_token_scope()
     if oid in m.get("user_only", []):
         return "user_only"
     if oid in m.get("session_only", []) or oid.startswith("gitrepo_"):
         return "session_only"
-    return "allow"
+    return "dual"
+
+
+def cli_mode() -> str:
+    """GRAPE_CLI_MODE：WORKER / USER / ALL（缺省/非法 → ALL，向后兼容）。"""
+    mode = (os.environ.get("GRAPE_CLI_MODE") or "ALL").strip().upper()
+    return mode if mode in ("WORKER", "USER", "ALL") else "ALL"
+
+
+def allowed_by_mode(mode: str, scope: str) -> bool:
+    """scope 在当前模式下是否允许（用于过滤帮助/commands 与守卫）。"""
+    if mode == "ALL" or scope == "dual":
+        return True
+    if mode == "WORKER":
+        return scope in ("dual", "session_only")
+    if mode == "USER":
+        return scope in ("dual", "user_only")
+    return True
+
+
+def _cmd_allowed(cmd) -> bool:
+    """命令/组在当前模式下是否至少有一个允许的叶子命令。"""
+    mode = cli_mode()
+    if isinstance(cmd, click.Group):
+        return any(_cmd_allowed(c) for c in cmd.commands.values())
+    scope = getattr(cmd, "token_scope", None) or "dual"
+    return allowed_by_mode(mode, scope)
 
 
 def _read_json_arg(raw) -> str:
@@ -233,6 +267,16 @@ def build_command(meta: dict) -> click.Command:
         if meta["operationId"] == "gitrepo_contents" and url.endswith("/contents/"):
             url = url[:-1]
         params = {n: kw.get(n) for n in query_params if kw.get(n) is not None}
+        if not allowed_by_mode(cli_mode(), _token_scope(meta)):
+            _scope = _token_scope(meta)
+            _mode = cli_mode()
+            _hint = ("set GRAPE_CLI_MODE=USER or ALL (or provide GRAPE_API_TOKEN)"
+                     if _scope == "user_only" else
+                     "set GRAPE_CLI_MODE=WORKER or ALL (or provide GRAPE_SESSION_TOKEN)")
+            raise CliError(
+                f"command requires token scope '{_scope}', not available in "
+                f"GRAPE_CLI_MODE={_mode}; {_hint}"
+            )
         body = None
         files = None
         form_data = None
@@ -317,7 +361,9 @@ def build_command(meta: dict) -> click.Command:
     if desc and desc != summary:
         help_lines += ["", desc]
     help_text = "\n".join(help_lines)
-    return click.Command(name="", callback=_run, params=options, help=help_text)
+    cmd = click.Command(name="", callback=_run, params=options, help=help_text)
+    cmd.token_scope = _token_scope(meta)
+    return cmd
 
 
 def build_groups(schema: dict) -> dict[str, click.Group]:
@@ -396,6 +442,23 @@ class _ContractGroup(click.Group):
                 click.echo(ctx.get_help())
                 ctx.exit(0)
             raise
+
+    def format_commands(self, ctx, formatter):
+        """按 GRAPE_CLI_MODE 过滤：只列出当前模式允许的动词（子组递归判定）。"""
+        rows = []
+        for name in self.list_commands(ctx):
+            cmd = self.get_command(ctx, name)
+            if cmd is None or getattr(cmd, "hidden", False):
+                continue
+            if not _cmd_allowed(cmd):
+                continue
+            rows.append((name, cmd))
+        if not rows:
+            return
+        max_name = max(len(n) for n, _ in rows)
+        limit = formatter.width - 10 - max_name
+        with formatter.section("Commands"):
+            formatter.write_dl([(n, c.get_short_help_str(limit)) for n, c in rows])
 
 
 def _materialize(subtree: dict, name: str) -> click.Group:

@@ -301,6 +301,63 @@ def test_skills_upload_requires_file(monkeypatch, fake_httpx, isolate_config):
     assert "Missing required --file" in str(res.exception)
 
 
+def test_token_scope_reads_contract_field_first():
+    """契约 x-token-scope 优先于静态表。"""
+    from src.registry import _token_scope
+
+    # 静态表里 skills_list 是 user_only，契约字段为 dual → 契约优先
+    meta = {"operationId": "skills_list",
+            "op": {"x-token-scope": "dual"}}
+    assert _token_scope(meta) == "dual"
+    # 无字段 → 回落静态表
+    meta2 = {"operationId": "skills_list", "op": {}}
+    assert _token_scope(meta2) == "user_only"
+
+
+def test_worker_mode_hides_user_only_in_commands(monkeypatch, fake_httpx, isolate_config):
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.delenv("GRAPE_CLI_MODE", raising=False)
+    monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
+    # 走 bundled（含 x-token-scope）
+    fake_httpx({})
+    res = CliRunner().invoke(cli, ["commands"])
+    assert res.exit_code == 0
+    assert "skills upload" not in res.output          # user_only 隐藏
+    assert "git-repo branches" in res.output          # session_only 可见
+    assert "tasks mine" in res.output                 # dual 可见
+
+
+def test_user_mode_hides_session_only_in_commands(monkeypatch, fake_httpx, isolate_config):
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_CLI_MODE", "USER")
+    fake_httpx({})
+    res = CliRunner().invoke(cli, ["commands"])
+    assert res.exit_code == 0
+    assert "git-repo branches" not in res.output      # session_only 隐藏
+    assert "skills upload" in res.output              # user_only 可见
+    assert "tasks mine" in res.output
+
+
+def test_mode_guard_blocks_worker_user_only(monkeypatch, fake_httpx, isolate_config):
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    upload = cli.get_command(None, "skills").commands["upload"]
+    res = CliRunner().invoke(upload, ["--file", "x.zip", "--agent_type", "qa"])
+    assert isinstance(res.exception, CliError)
+    assert "GRAPE_CLI_MODE=WORKER" in str(res.exception)
+    assert "user_only" in str(res.exception)
+
+
 def test_contents_raw_decodes_base64(monkeypatch, fake_httpx):
     """#3：contents --raw 解码单文件 base64 直出文本。"""
     import base64 as b64

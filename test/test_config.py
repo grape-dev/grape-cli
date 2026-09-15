@@ -63,3 +63,19 @@ def test_default_timeout_30_and_cli_override():
     assert config.cli_timeout() == 30
     config.set_cli_params(timeout=120)
     assert config.cli_timeout() == 120
+
+
+def test_user_mode_prefers_api_token(monkeypatch, isolate_config):
+    monkeypatch.setenv("GRAPE_CLI_MODE", "USER")
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_1")
+    monkeypatch.setenv("GRAPE_API_TOKEN", "grape_1")
+    _, tok = config.resolve()
+    assert tok == "grape_1"
+
+
+def test_worker_all_mode_prefer_session_token(monkeypatch, isolate_config):
+    monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_1")
+    monkeypatch.setenv("GRAPE_API_TOKEN", "grape_1")
+    _, tok = config.resolve()
+    assert tok == "tk_1"

@@ -39,11 +39,16 @@ def load_file_config() -> dict:
     return {}
 
 
+_config_warned = False
+
+
 def resolve(base_url: str = "", token: str = "", refresh: bool = False) -> tuple[str, str]:
     """返回 (base_url, token)。缺任一 → 抛 if config incomplete.
 
     优先级：函数参数 == CLI 一次性参数（--base-url/--token）> 环境变量 > config.json。
+    token 双变量在 GRAPE_CLI_MODE=USER 时优先 GRAPE_API_TOKEN，否则 session 优先。
     """
+    global _config_warned
     cfg = load_file_config() if not refresh else {}
     env = os.environ
 
@@ -54,9 +59,22 @@ def resolve(base_url: str = "", token: str = "", refresh: bool = False) -> tuple
     if not _base:
         _base = "http://localhost:8000"
 
-    _token = (token or "").strip() or _CLI_PARAMS["token"] or \
-             (env.get("GRAPE_SESSION_TOKEN") or "").strip() or \
-             (env.get("GRAPE_API_TOKEN") or "").strip() or str(cfg.get("token") or "").strip()
+    mode = (env.get("GRAPE_CLI_MODE") or "ALL").strip().upper()
+    one_shot = (token or "").strip() or _CLI_PARAMS["token"]
+    if mode == "USER":
+        env_tok = (env.get("GRAPE_API_TOKEN") or "").strip() or \
+                  (env.get("GRAPE_SESSION_TOKEN") or "").strip()
+        if not env.get("GRAPE_API_TOKEN") and not one_shot and not _config_warned:
+            _config_warned = True
+            import sys
+            sys.stderr.write(
+                "warning: GRAPE_CLI_MODE=USER but GRAPE_API_TOKEN is missing; "
+                "falling back to session token\n"
+            )
+    else:  # WORKER / ALL
+        env_tok = (env.get("GRAPE_SESSION_TOKEN") or "").strip() or \
+                  (env.get("GRAPE_API_TOKEN") or "").strip()
+    _token = one_shot or env_tok or str(cfg.get("token") or "").strip()
     return _base.rstrip("/"), _token
 
 
