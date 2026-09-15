@@ -21,6 +21,37 @@ tools:
 4. **结构化内容放评论，不硬改 Issue 状态**：Issue 阶段/状态属 user 层（webhook/UI），agent 不要改。
 5. **机器可读输出加 `--json-out`**；长 JSON 用 `--json @file.json`。
 
+## 安装
+
+```bash
+# 全新机器：装 grape CLI（已装可跳过）
+# `git+<URL>` = pip 的 VCS 直装协议：从 Git 仓库（而非 PyPI）克隆并安装
+pip install git+https://gitcode.com/grape-dev/grape-cli.git
+grape --version
+
+# 本仓库编辑安装（开发用地）
+# cd <grape-cli 源码目录> && pip install -e .[dev]
+```
+
+> agent 环境通常已安装并注入环境变量；仅确认 `which grape` 与 `grape --version` 即可。
+
+## 配置（token 与地址）
+
+优先级：`--token/--base-url/--timeout`（一次性参数，进程内）> 环境变量 > `~/.grape/config.json`。
+
+```bash
+export GRAPE_BASE_URL=https://grape.example.com   # 服务端地址（agent 环境已注入 GRAPE_SERVER_URL，自动回退）
+export GRAPE_SESSION_TOKEN=tk_xxx                  # 会话级（默认用这个）
+# export GRAPE_API_TOKEN=grape_xxx                 # 用户级（D 类账户/平台命令需要）
+```
+
+- 缺省 `GRAPE_BASE_URL` → `http://localhost:8000`；缺 token 调用会报 `HTTP 401 ... re-inject`。
+- `~/.grape/config.json`：
+  ```json
+  { "base_url": "https://grape.example.com", "token": "" }
+  ```
+  建议 token 用环境变量注入，勿写文件。
+
 ## 一行速查
 
 ```bash
