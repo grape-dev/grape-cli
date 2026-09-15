@@ -85,10 +85,14 @@ def _params_by_in(op: dict, where: str) -> list[str]:
 
 
 def _body_fields(meta: dict) -> list[str]:
-    """解析 requestBody schema 的字段清单（$ref 解引用到 components）。"""
+    """解析 requestBody schema 的字段清单（$ref 解引用到 components）。
+
+    兼容 application/json 与 multipart/form-data（上传类）。
+    """
     op = meta["op"]
-    content = ((op.get("requestBody") or {}).get("content") or {}).get("application/json") or {}
-    sch = content.get("schema") or {}
+    content = (op.get("requestBody") or {}).get("content") or {}
+    ct = content.get("application/json") or content.get("multipart/form-data") or {}
+    sch = ct.get("schema") or {}
     name = (sch.get("$ref") or "").rsplit("/", 1)[-1]
     schema = meta.get("schemas", {}).get(name, {}) if name else (sch or {})
     return sorted(schema.get("properties") or {})
@@ -190,10 +194,22 @@ def build_command(meta: dict) -> click.Command:
     path_params = _params_by_in(op, "path")
     query_params = _params_by_in(op, "query")
     has_body = "requestBody" in op
+    # multipart/form-data 上传类（如 skills upload）：--file + 表单字段，不走 --json
+    _content = ((op.get("requestBody") or {}).get("content") or {})
+    is_multipart = bool(_content.get("multipart/form-data"))
+    multipart_fields = []
+    if is_multipart:
+        _sch = _content["multipart/form-data"].get("schema") or {}
+        _ref = (_sch.get("$ref") or "").rsplit("/", 1)[-1]
+        _props = (meta.get("schemas", {}).get(_ref, {}) or {}).get("properties", {}) if _ref else (_sch.get("properties") or {})
+        multipart_fields = [k for k in sorted(_props) if k != "file"]
 
     options = [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in path_params]
     options += [click.Option([f"--{n}"], default=None, help=f"parameter {n}") for n in query_params]
-    if has_body:
+    if is_multipart:
+        options.append(click.Option(["--file"], default=None, help="upload file path (multipart)"))
+        options += [click.Option([f"--{f}"], default="", help=f"form field {f}") for f in multipart_fields]
+    elif has_body:
         options.append(click.Option(["--json"], default=None,
                                      help="JSON string request body (or @file.json)"))
     options.append(click.Option(["--json-out"], is_flag=True, help="machine-readable JSON output"))
@@ -218,22 +234,38 @@ def build_command(meta: dict) -> click.Command:
             url = url[:-1]
         params = {n: kw.get(n) for n in query_params if kw.get(n) is not None}
         body = None
-        raw = kw.get("json")
-        if has_body and raw:
+        files = None
+        form_data = None
+        if is_multipart:
+            _f = kw.get("file")
+            if not _f:
+                raise CliError("Missing required --file")
             try:
-                body = json.loads(_read_json_arg(raw))
-            except CliError:
-                raise
-            except Exception:
-                raise CliError("--json is not a valid JSON string")
-            if body_fields and not isinstance(body, dict):
-                raise CliError(
-                    f"--json must be a JSON object for this endpoint "
-                    f"(allowed fields: {', '.join(body_fields)})"
-                )
-            _validate_body(meta, body, body_fields)
+                with open(_f, "rb") as fh:
+                    fb = fh.read()
+            except OSError as e:
+                raise CliError(f"cannot read --file '{_f}': {e}")
+            fname = _f.replace("\\", "/").rsplit("/", 1)[-1]
+            files = {"file": (fname, fb, "application/zip")}
+            form_data = {f: kw.get(f) for f in multipart_fields if kw.get(f)}
+        else:
+            raw = kw.get("json")
+            if has_body and raw:
+                try:
+                    body = json.loads(_read_json_arg(raw))
+                except CliError:
+                    raise
+                except Exception:
+                    raise CliError("--json is not a valid JSON string")
+                if body_fields and not isinstance(body, dict):
+                    raise CliError(
+                        f"--json must be a JSON object for this endpoint "
+                        f"(allowed fields: {', '.join(body_fields)})"
+                    )
+                _validate_body(meta, body, body_fields)
         try:
-            _status, data = api.request(method, url, params=params, json_body=body)
+            _status, data = api.request(method, url, params=params, json_body=body,
+                                        files=files, data=form_data)
         except CliError as e:
             # D 类（user_only）：会话 token 403 时追加英文行动指引，帮 agent 立即换钥
             if e.code == 403 and _token_scope(meta) == "user_only":

@@ -265,6 +265,42 @@ def test_allow_scope_403_not_appended(monkeypatch, fake_httpx):
     assert "use GRAPE_API_TOKEN" not in str(res.exception)
 
 
+def test_skills_upload_sends_multipart(monkeypatch, fake_httpx, tmp_path, isolate_config):
+    """skills upload：--file 以 multipart 发送（files+form data）。"""
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    zipf = tmp_path / "myskill.zip"
+    zipf.write_bytes(b"PK\x03\x04 fakezip")
+    calls = fake_httpx({"/api/skills/upload": (200, {"message": "ok"})})
+    upload = cli.get_command(None, "skills").commands["upload"]
+    res = CliRunner().invoke(upload, ["--file", str(zipf), "--scope", "user",
+                                      "--agent_type", "coding"])
+    assert res.exit_code == 0
+    assert "ok" in res.output
+    ups = [k for m, _, k in calls if m == "POST"]
+    assert ups and ups[0]["files"]["file"][0] == "myskill.zip"
+    assert ups[0]["files"]["file"][1] == b"PK\x03\x04 fakezip"
+    assert ups[0]["data"] == {"scope": "user", "agent_type": "coding"}
+    assert ups[0]["json"] is None
+
+
+def test_skills_upload_requires_file(monkeypatch, fake_httpx, isolate_config):
+    from click.testing import CliRunner
+    from src.cli import cli
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    upload = cli.get_command(None, "skills").commands["upload"]
+    res = CliRunner().invoke(upload, ["--scope", "user"])
+    assert isinstance(res.exception, CliError)
+    assert "Missing required --file" in str(res.exception)
+
+
 def test_contents_raw_decodes_base64(monkeypatch, fake_httpx):
     """#3：contents --raw 解码单文件 base64 直出文本。"""
     import base64 as b64

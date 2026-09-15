@@ -33,7 +33,8 @@ class ApiClient:
         return h
 
     def request(self, method: str, path: str, *, params: dict | None = None,
-                json_body: dict | None = None) -> tuple[int, dict]:
+                json_body: dict | None = None, files: dict | None = None,
+                data: dict | None = None) -> tuple[int, dict]:
         url = self.base_url + path
         query = None
         if params:
@@ -42,9 +43,14 @@ class ApiClient:
             query = dict(query or {})
             query["access_token"] = self.token
         try:
-            r = httpx.request(method.upper(), url, params=query or None,
-                              headers=self._headers(), json=json_body or None,
-                              timeout=self.timeout)
+            r = httpx.request(
+                method.upper(), url, params=query or None,
+                headers=self._headers(),
+                json=None if (files or data) else json_body,
+                timeout=self.timeout,
+                files=files or None,
+                data=data or None,
+            )
         except httpx.ConnectError as e:
             raise CliError(f"base_url unreachable: {self.base_url} ({e})")
         except httpx.TimeoutException as e:

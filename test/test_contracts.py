@@ -173,3 +173,16 @@ def test_bundled_contract_has_repo_tree_capabilities():
 
     iub = bundled["components"]["schemas"]["IssueUpdateBody"]["properties"]
     assert "body" in iub
+
+
+def test_bundled_contract_has_skills_full_ops():
+    """服务端已导出整套 skills 接口 → 快照应含 upload/search/convert 等。"""
+    bundled = contracts.load_bundled()
+    ops = {o.get("operationId") for ms in bundled["paths"].values()
+           for o in ms.values() if isinstance(o, dict) and o.get("operationId")}
+    for oid in ("skills_upload", "skills_search", "skills_convert", "skills_like",
+                "skills_delete", "skills_download", "skills_sub_list", "skills_stats"):
+        assert oid in ops, oid
+    # upload 为 multipart/form-data
+    up = bundled["paths"]["/api/skills/upload"]["post"]
+    assert "multipart/form-data" in up["requestBody"]["content"]
