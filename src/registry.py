@@ -7,6 +7,7 @@
 - **新增 OpenAPI 接口 → 重建契约 → CLI 自动获得命令，零 CLI 源码改动**（R7）。
 - 帮助语义：优先 `src/data/openapi.en.json` 的 operationId → 英文含义，回退契约 summary。
 """
+import base64
 import difflib
 import json
 import re
@@ -196,6 +197,10 @@ def build_command(meta: dict) -> click.Command:
         options.append(click.Option(["--json"], default=None,
                                      help="JSON string request body (or @file.json)"))
     options.append(click.Option(["--json-out"], is_flag=True, help="machine-readable JSON output"))
+    if meta["operationId"] == "gitrepo_contents":
+        options.append(click.Option(
+            ["--raw"], is_flag=True,
+            help="base64-decode single-file content to raw text (dir listing falls back to JSON)"))
 
     def _run(**kw):
         api = ApiClient()
@@ -238,6 +243,14 @@ def build_command(meta: dict) -> click.Command:
                     code=403,
                 )
             raise
+        if meta["operationId"] == "gitrepo_contents" and kw.get("raw") and isinstance(data, dict):
+            _c = data.get("content")
+            if _c:
+                try:
+                    click.echo(base64.b64decode(_c).decode("utf-8", "replace"))
+                    return
+                except Exception:
+                    pass
         click.echo(json.dumps(data, ensure_ascii=False,
                               indent=None if kw.get("json_out") else 2))
 

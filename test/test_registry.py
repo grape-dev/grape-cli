@@ -265,6 +265,37 @@ def test_allow_scope_403_not_appended(monkeypatch, fake_httpx):
     assert "use GRAPE_API_TOKEN" not in str(res.exception)
 
 
+def test_contents_raw_decodes_base64(monkeypatch, fake_httpx):
+    """#3：contents --raw 解码单文件 base64 直出文本。"""
+    import base64 as b64
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    content = "aGVsbG8="  # "hello"
+    fake_httpx({"/api/git-repo/o/r/contents/README.md":
+                (200, {"content": content, "encoding": "base64", "type": "file"})})
+    contents = cli.get_command(None, "git-repo").commands["contents"]
+    res = CliRunner().invoke(contents, ["--owner", "o", "--repo", "r",
+                                        "--path", "README.md", "--raw"])
+    assert res.exit_code == 0
+    assert res.output == "hello\n"
+
+
+def test_contents_raw_falls_back_to_json_for_dirs(monkeypatch, fake_httpx):
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({"/api/git-repo/o/r/contents": (200, [{"type": "dir", "name": "x"}])})
+    contents = cli.get_command(None, "git-repo").commands["contents"]
+    res = CliRunner().invoke(contents, ["--owner", "o", "--repo", "r", "--raw"])
+    assert res.exit_code == 0
+    assert '"type": "dir"' in res.output
+
+
 def test_command_help_marks_token_scope():
     """#2：user_only / session_only 命令帮助带作用域标识；allow 不带。"""
     from src.contracts import load_bundled

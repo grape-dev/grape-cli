@@ -179,19 +179,30 @@ def cli(ctx, base_url: str | None, token: str | None, timeout: int | None):
         click.echo(ctx.get_help())
 
 
+def _walk_commands(grp, prefix, out):
+    for name in sorted(grp.commands):
+        cmd = grp.commands[name]
+        full = f"{prefix} {name}"
+        if isinstance(cmd, click.Group):
+            _walk_commands(cmd, full, out)
+        else:
+            out.append(full)
+
+
 def _tree_lines(pattern: str = "") -> list[str]:
+    """列出【真实可调用】的契约命令（空格分隔、叶子展开），供 grape commands。"""
     try:
         schema = load_contract()
+        groups = build_groups(schema)
     except Exception as e:
         return [f"contract load failed: {e} (check base_url/token or run grape refresh)"]
     lines = []
-    for group, verbs in command_tree(schema).items():
-        for v in verbs:
-            name = f"{group} {v}"
-            if pattern and pattern not in name:
-                continue
-            lines.append(name)
-    return sorted(lines)
+    for gname in sorted(groups):
+        _walk_commands(groups[gname], gname, lines)
+    lines = sorted(set(lines))
+    if pattern:
+        lines = [n for n in lines if pattern in n]
+    return lines
 
 
 @cli.command("refresh")

@@ -76,7 +76,10 @@ def test_commands_lists_contract_commands(env, fake_httpx, standard_router):
     res = CliRunner().invoke(cli, ["commands"])
     assert res.exit_code == 0
     assert "tasks mine" in res.output
-    assert "git-repo issues_list" in res.output
+    assert "git-repo issues list" in res.output
+    # 输出为可调用命令名（空格分隔），不泄露冗余 contents_root
+    assert "git-repo issues_list" not in res.output
+    assert "contents_root" not in res.output
 
 
 def test_generated_command_runs(env, fake_httpx, standard_router):
