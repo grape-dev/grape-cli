@@ -1,2 +1,2 @@
 """grape CLI 独立包（Issue-45 M4）。"""
-__version__ = "0.2.3"
+__version__ = "0.2.4"
