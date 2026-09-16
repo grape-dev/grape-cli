@@ -4559,6 +4559,1054 @@
         ],
         "x-token-scope": "user_only"
       }
+    },
+    "/api/git-repo/{owner}/{repo}/workspace": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "仓库工作区路径（CLI 本地 git 用）",
+        "operationId": "gitrepo_workspace",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "session_only"
+      }
+    },
+    "/api/git-repo/{owner}/{repo}/git-credential": {
+      "get": {
+        "tags": [
+          "git-repo"
+        ],
+        "summary": "一次性 git 平台凭据（方案③ CLI 内部使用，TTL 过期）",
+        "description": "返回 CLI 本地执行 git 所需的平台凭据（一次性/短期，进程内使用不落盘）。\n\ngitcode：Basic 用 username=`x-access-token`、password=配置的 gitcode token。",
+        "operationId": "gitrepo_git_credential",
+        "parameters": [
+          {
+            "name": "owner",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Owner"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "session_only"
+      }
+    },
+    "/api/skills/agent-stats": {
+      "get": {
+        "tags": [
+          "skills"
+        ],
+        "summary": "技能统计（总数 + 按 agent_type 分组）",
+        "description": "返回技能总数 + 每个 agent_type 的技能数量。\n\nscope/repo 参数与 list_skills 一致，用于按维度统计。",
+        "operationId": "skills_agent_stats",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Scope"
+            }
+          },
+          {
+            "name": "repo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Repo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "dual"
+      }
+    },
+    "/api/issues/{issue_id}/start": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "打开 Issue 会话",
+        "description": "打开 Issue 会话（\"去对话\"）——不再翻转状态（迁移自 /api/tasks/{id}/start）。",
+        "operationId": "issues_start",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "dual"
+      }
+    },
+    "/api/issues/{issue_id}/status": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "查询 Issue 状态（轮询 wait 用）",
+        "description": "返回 Issue 当前状态（含 repo/issue 上下文），供 CLI `grape issues wait` 轮询（迁移自 /api/tasks/{id}/status）。",
+        "operationId": "issues_status_get",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "dual"
+      },
+      "put": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "更新 Issue 状态",
+        "description": "Issue 状态迁移（迁移自 /api/tasks/{id}/status，Issue #85 流转规则）。",
+        "operationId": "issues_status",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_IssueStatusBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "dual"
+      }
+    },
+    "/api/issues/{issue_id}/confirm-done": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "确认 Issue 完成",
+        "description": "开发者确认需求完成（迁移自 /api/tasks/{id}/confirm-done，Issue #51）。",
+        "operationId": "issues_confirm_done",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_IssueConfirmBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/cancel": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "取消 Issue（停流水线）",
+        "description": "开发者取消需求（迁移自 /api/tasks/{id}/cancel，Issue #51）。任何阶段可取消，Agent 终止 + 流水线停止。",
+        "operationId": "issues_cancel",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/resume": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "恢复已取消的 Issue",
+        "description": "恢复已取消的需求（迁移自 /api/tasks/{id}/resume，Issue #51）。回到取消前 stage 继续流转。",
+        "operationId": "issues_resume",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/pipeline": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Issue pipeline 路线图（按 issue.id）",
+        "description": "获取需求关联的流水线信息和事件历史（迁移自 /api/tasks/{id}/pipeline，Issue #51 详情页）。",
+        "operationId": "issues_pipeline_detail",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/clarifications": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "Issue 澄清历史",
+        "description": "拉取 agent 在该 Issue 上的澄清消息（迁移自 /api/tasks/{id}/clarifications）。",
+        "operationId": "issues_clarifications",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/clarify": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "回复 Issue 澄清",
+        "description": "开发者在需求中心回复 agent 澄清：同步发 GitCode Issue 评论 + 写入任务会话（迁移自 /api/tasks/{id}/clarify）。",
+        "operationId": "issues_clarify",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_IssueClarifyBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/{issue_id}/attachments": {
+      "post": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "上传 Issue 附件",
+        "description": "上传附件到需求关联的附件目录（迁移自 /api/tasks/{id}/attachments）。",
+        "operationId": "issues_upload_attachment",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_issues_upload_attachment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      },
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "列出 Issue 附件",
+        "description": "列出需求关联的附件文件列表（迁移自 /api/tasks/{id}/attachments）。",
+        "operationId": "issues_list_attachments",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "dual"
+      }
+    },
+    "/api/issues/{issue_id}/attachments/{filename}": {
+      "delete": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "删除 Issue 附件",
+        "description": "删除指定附件文件（迁移自 /api/tasks/attachments/{filename}?task_id=）。filename 为 UUID 文件名。",
+        "operationId": "issues_delete_attachment",
+        "parameters": [
+          {
+            "name": "issue_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Issue Id"
+            }
+          },
+          {
+            "name": "filename",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Filename"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/issues/mine": {
+      "get": {
+        "tags": [
+          "issues"
+        ],
+        "summary": "我的 Issue 列表（需求中心·个人维度）",
+        "description": "我的需求列表（迁移自 /api/tasks/mine，A 类归位，issue 视角）。\n\n返回当前用户的需求（Issue 卡片行，user_id 过滤）+ 富化\n（scene/stage/is_running/agent_statuses，复用 tasks._query_tasks）。",
+        "operationId": "issues_mine",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(active|processing|awaiting_input|pending_review|completed|)?$",
+              "default": "",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "repo_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按仓库过滤",
+              "default": "",
+              "title": "Repo Key"
+            },
+            "description": "按仓库过滤"
+          },
+          {
+            "name": "sort_order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(desc|asc)$",
+              "description": "按创建时间排序方向",
+              "default": "desc",
+              "title": "Sort Order"
+            },
+            "description": "按创建时间排序方向"
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(default|time)$",
+              "description": "default=状态优先；time=纯时间序",
+              "default": "default",
+              "title": "Mode"
+            },
+            "description": "default=状态优先；time=纯时间序"
+          },
+          {
+            "name": "created_by_me",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "仅我创建的任务",
+              "default": "",
+              "title": "Created By Me"
+            },
+            "description": "仅我创建的任务"
+          },
+          {
+            "name": "assignees",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "按创建人筛选(逗号分隔)",
+              "default": "",
+              "title": "Assignees"
+            },
+            "description": "按创建人筛选(逗号分隔)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
+    },
+    "/api/knowledge/{knowledge_id}/refs/batch": {
+      "post": {
+        "tags": [
+          "knowledge"
+        ],
+        "summary": "Add Knowledge Refs Batch",
+        "description": "批量新增场景/Agent 关联（幂等，跳过已存在的）。",
+        "operationId": "knowledge_add_refs_batch",
+        "parameters": [
+          {
+            "name": "knowledge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Knowledge Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KnowledgeRefBatchBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "apiKey": []
+          },
+          {
+            "privateKey": []
+          },
+          {
+            "accessToken": []
+          }
+        ],
+        "x-token-scope": "user_only"
+      }
     }
   },
   "components": {
@@ -6402,6 +7450,53 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "_IssueStatusBody": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "_IssueStatusBody"
+      },
+      "_IssueConfirmBody": {
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation",
+            "default": "user_confirmed"
+          }
+        },
+        "type": "object",
+        "title": "_IssueConfirmBody"
+      },
+      "_IssueClarifyBody": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "_IssueClarifyBody"
+      },
+      "Body_issues_upload_attachment": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_issues_upload_attachment"
       }
     },
     "securitySchemes": {

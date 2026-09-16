@@ -47,8 +47,11 @@ def _read_cache() -> dict | None:
 
 
 def fetch_schema(base_url: str, token: str) -> dict:
-    """按优先级尝试拉取契约：static/openapi.json → /openapi.json。"""
-    api = ApiClient(base_url=base_url, token=token)
+    """按优先级尝试拉取契约：static/openapi.json → /openapi.json。
+
+    契约端点为公开资源（/static/openapi.json），无需 token 即可拉取。
+    """
+    api = ApiClient(base_url=base_url, token=token, require_token=False)
     last_error: Exception | None = None
     for path in _CONTRACT_PATHS:
         try:

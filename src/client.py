@@ -14,11 +14,12 @@ class CliError(Exception):
 
 class ApiClient:
     def __init__(self, base_url: str = "", token: str = "", channel: str = "bearer",
-                 timeout: int = 0):
+                 timeout: int = 0, *, require_token: bool = True):
         self.base_url, self.token = config.resolve(base_url, token)
         self.channel = channel  # bearer / PRIVATE-TOKEN / access_token
         self.timeout = int(timeout or 0) or config.cli_timeout()
-        if not self.token:
+        # 契约拉取（/static/openapi.json）为公开端点，不需要 token
+        if require_token and not self.token:
             raise CliError(
                 "Missing token: set GRAPE_SESSION_TOKEN (task) / GRAPE_API_TOKEN (user), "
                 "or the 'token' field in ~/.grape/config.json"
@@ -26,10 +27,11 @@ class ApiClient:
 
     def _headers(self, extra: dict | None = None) -> dict:
         h = {"Accept": "application/json"}
-        if self.channel == "bearer":
-            h["Authorization"] = f"Bearer {self.token}"
-        elif self.channel == "private-token":
-            h["PRIVATE-TOKEN"] = self.token
+        if self.token:
+            if self.channel == "bearer":
+                h["Authorization"] = f"Bearer {self.token}"
+            elif self.channel == "private-token":
+                h["PRIVATE-TOKEN"] = self.token
         return h
 
     def request(self, method: str, path: str, *, params: dict | None = None,
@@ -39,7 +41,7 @@ class ApiClient:
         query = None
         if params:
             query = {k: v for k, v in params.items() if v not in (None, "", [])}
-        if self.channel == "access_token":
+        if self.channel == "access_token" and self.token:
             query = dict(query or {})
             query["access_token"] = self.token
         try:

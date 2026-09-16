@@ -120,6 +120,22 @@ def test_fetch_schema_malformed_static_falls_through(monkeypatch, fake_httpx):
     assert schema["info"]["version"] == "7.7.7"
 
 
+def test_fetch_schema_without_token_works(monkeypatch, fake_httpx, isolate_config):
+    """契约端点为公开资源：无 token 也能拉取（refresh 无需登录）。"""
+    fake_httpx({"/static/openapi.json": (200, {"info": {"version": "9.9.9"}, "paths": {}})})
+    schema = contracts.fetch_schema("http://x", "")
+    assert schema["info"]["version"] == "9.9.9"
+
+
+def test_load_contract_without_token_uses_remote(monkeypatch, fake_httpx, isolate_config):
+    monkeypatch.delenv("GRAPE_SESSION_TOKEN", raising=False)
+    monkeypatch.delenv("GRAPE_API_TOKEN", raising=False)
+    fake_httpx({"/static/openapi.json": (200, {"info": {"version": "6.6.6"}, "paths": {}})})
+    schema = contracts.load_contract(base_url="http://x")
+    assert contracts.contract_source()["kind"] == "remote"
+    assert schema["info"]["version"] == "6.6.6"
+
+
 def test_remote_success_prefers_remote_over_bundled(isolate_config, monkeypatch, sample_schema):
     def _ok(base_url, token):
         return sample_schema

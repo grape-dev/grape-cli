@@ -442,3 +442,18 @@ def test_en_summary_overlay_falls_back_to_contract(sample_schema):
 def test_en_summary_overlay_preferred(monkeypatch):
     op = {"operationId": "tasks_mine", "summary": "中文摘要"}
     assert _en_summary(op) == "My task list"
+
+
+def test_parse_skips_autogen_ugly_operation_ids():
+    """解析契约时过滤 autogen 丑名（含 api_ 的内嵌路径），避免噪音组。"""
+    schema = {
+        "paths": {
+            "/api/ok": {"get": {"operationId": "things_list", "summary": "ok"}},
+            "/api/bad": {"get": {"operationId": "create_scene_api_scenes_bad_post",
+                                 "summary": "bad"}},
+        }
+    }
+    ops = parse_operations(schema)
+    ids = [o["operationId"] for o in ops]
+    assert "things_list" in ids
+    assert "create_scene_api_scenes_bad_post" not in ids

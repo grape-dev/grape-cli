@@ -67,6 +67,9 @@ def parse_operations(schema: dict) -> list[dict]:
             if not isinstance(op, dict) or not op.get("operationId"):
                 continue
             oid = op["operationId"]
+            # 过滤服务端 autogen 丑名（路径内嵌 "api_"），避免命令树混入 create/get 等噪音组
+            if "api_" in oid:
+                continue
             parts = oid.split("_")
             verb = parts[1:] or ["list"]
             ops.append({
