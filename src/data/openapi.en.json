@@ -83,5 +83,6 @@
   "gitrepo_workspace": "Repository workspace path (for local git via CLI)",
   "knowledge_add_refs_batch": "Add knowledge refs (batch)",
   "skills_agent_stats": "Agent skill usage stats (by agent_type)",
-  "auth_profile_get": "Get current user profile"
+  "auth_profile_get": "Get current user profile",
+  "tasks_current": "Get current task detail (agent self-introspection during execution)"
 }
