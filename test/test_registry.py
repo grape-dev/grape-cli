@@ -4,6 +4,7 @@ import json
 from src.registry import (
     GROUP_ALIAS,
     _en_summary,
+    _load_en_summaries,
     build_command,
     build_groups,
     command_tree,
@@ -457,3 +458,20 @@ def test_parse_skips_autogen_ugly_operation_ids():
     ids = [o["operationId"] for o in ops]
     assert "things_list" in ids
     assert "create_scene_api_scenes_bad_post" not in ids
+
+
+def test_en_overlay_covers_all_bundled_ops():
+    """帮助全英文：快照每个 op 都需英文覆盖层（或 summary 已是 ASCII），防中文泄漏。"""
+    from src.contracts import load_bundled
+
+    en = _load_en_summaries()
+    bad = []
+    for ms in load_bundled()["paths"].values():
+        for o in ms.values():
+            if not isinstance(o, dict):
+                continue
+            oid = o.get("operationId", "")
+            sm = (o.get("summary") or "")
+            if oid not in en and any(ord(ch) > 127 for ch in sm):
+                bad.append(oid)
+    assert bad == [], f"缺英文覆盖层: {bad}"
