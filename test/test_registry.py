@@ -232,7 +232,7 @@ def test_other_required_path_param_still_enforced(monkeypatch, fake_httpx):
     assert "Missing required parameter --number" in str(res.exception)
 
 
-def test_d_scope_403_appends_user_key_hint(monkeypatch, fake_httpx):
+def test_d_scope_403_appends_user_key_hint(monkeypatch, fake_httpx, isolate_config):
     """D 类（user_only）403 → 追加英文行动指引。"""
     from click.testing import CliRunner
     from src.cli import cli
@@ -249,7 +249,7 @@ def test_d_scope_403_appends_user_key_hint(monkeypatch, fake_httpx):
     assert "session token (tk_) is rejected" in str(res.exception)
 
 
-def test_allow_scope_403_not_appended(monkeypatch, fake_httpx):
+def test_allow_scope_403_not_appended(monkeypatch, fake_httpx, isolate_config):
     """非 D 类 403 → 不追加 user key 指引（原样）。"""
     from click.testing import CliRunner
     from src.cli import cli
