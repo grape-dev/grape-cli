@@ -475,3 +475,24 @@ def test_en_overlay_covers_all_bundled_ops():
             if oid not in en and any(ord(ch) > 127 for ch in sm):
                 bad.append(oid)
     assert bad == [], f"缺英文覆盖层: {bad}"
+
+
+def test_worker_mode_group_summary_hides_user_only(monkeypatch):
+    """WORKER：组摘要行不再列 user_only 动词（如 skills upload）；dual 保留。"""
+    import os
+    from src.contracts import load_bundled
+
+    monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
+    skills = build_groups(load_bundled())["skills"].help
+    assert "Upload a skill ZIP" not in skills
+    assert "agent" in skills  # dual 保留
+
+
+def test_all_mode_group_summary_keeps_all(monkeypatch):
+    import os
+    from src.contracts import load_bundled
+
+    monkeypatch.setenv("GRAPE_CLI_MODE", "ALL")
+    skills = build_groups(load_bundled())["skills"].help
+    assert "Upload a skill ZIP" in skills
+    assert "List skills" in skills

@@ -464,10 +464,23 @@ class _ContractGroup(click.Group):
             formatter.write_dl([(n, c.get_short_help_str(limit)) for n, c in rows])
 
 
+def _subtree_allowed(subtree) -> bool:
+    """子树叶子中是否有任何一个在当前 GRAPE_CLI_MODE 下允许（用于组摘要过滤）。"""
+    if _is_meta(subtree):
+        return allowed_by_mode(cli_mode(), _token_scope(subtree))
+    return any(_subtree_allowed(v) for v in subtree.values())
+
+
 def _materialize(subtree: dict, name: str) -> click.Group:
-    """按子命令摘要聚合出“实际含义”，作为组帮助首行（方便 agent 快速理解）。"""
+    """按子命令摘要聚合出“实际含义”，作为组帮助首行（方便 agent 快速理解）。
+
+    摘要按 GRAPE_CLI_MODE 过滤：只列当前模式允许的动词，避免 user_only 命令在
+    WORKER 帮助下泄漏（commands 列表已过滤，首行摘要需同步）。
+    """
     meaning = []
     for key, val in sorted(subtree.items()):
+        if not _subtree_allowed(val):
+            continue
         if _is_meta(val):
             s = _en_summary(val["op"])
             meaning.append(f"{key}: {s}" if s else key)
