@@ -172,7 +172,7 @@ def test_bundled_contract_has_refreshed_task_endpoints():
     # 规范化的 operationId（服务端自动生成的丑名已改写）
     all_ids = {oid for oid in ops.values() if oid}
     assert "knowledge_detail" in all_ids
-    assert "auth_profile_get" in all_ids
+    assert "auth_profile" in all_ids
     mine_params = {p["name"] for p in bundled["paths"]["/api/tasks/mine"]["get"].get("parameters", [])}
     assert {"status", "repo_key", "sort_order", "mode"} <= mine_params
 
@@ -196,8 +196,8 @@ def test_bundled_contract_has_skills_full_ops():
     bundled = contracts.load_bundled()
     ops = {o.get("operationId") for ms in bundled["paths"].values()
            for o in ms.values() if isinstance(o, dict) and o.get("operationId")}
-    for oid in ("skills_upload", "skills_search", "skills_convert", "skills_like",
-                "skills_delete", "skills_download", "skills_sub_list", "skills_stats"):
+    for oid in ("skills_upload", "skills_search", "skills_convert",
+                "skills_list", "skills_detail", "skills_agent_stats"):
         assert oid in ops, oid
     # upload 为 multipart/form-data
     up = bundled["paths"]["/api/skills/upload"]["post"]

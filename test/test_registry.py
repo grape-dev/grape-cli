@@ -4,7 +4,6 @@ import json
 from src.registry import (
     GROUP_ALIAS,
     _en_summary,
-    _load_en_summaries,
     build_command,
     build_groups,
     command_tree,
@@ -67,7 +66,7 @@ def test_generated_command_short_help_is_summary(sample_schema):
     op = next(o for o in ops if o["operationId"] == "gitrepo_issues_list")
     cmd = build_command(op)
     short = cmd.get_short_help_str()
-    assert short.startswith("List issues")
+    assert short.startswith("List repo issues")
     assert "Invoke grape API: GET" in cmd.help
 
 
@@ -75,13 +74,13 @@ def test_group_help_derives_verb_meanings(sample_schema):
     groups = build_groups(sample_schema)
     tasks = groups["tasks"]
     assert "mine" in tasks.help
-    assert "My task list" in tasks.help
+    assert "Mine tasks" in tasks.help
     assert "create" in tasks.help
 
     git_grp = groups["git-repo"]
     sub = git_grp.commands["issues"]
     assert "list" in sub.help
-    assert "List issues" in sub.help
+    assert "List repo issues" in sub.help
 
 
 def test_git_repo_group_has_platform_api_intro(sample_schema):
@@ -434,15 +433,11 @@ def test_freeform_body_not_validated(sample_schema):
     _validate_body(meta, {"anything": 1}, bf)  # 不抛异常
 
 
-def test_en_summary_overlay_falls_back_to_contract(sample_schema):
-    # 覆盖层未收录的 operationId 回落契约 summary
+def test_en_summary_uses_contract_summary():
+    """摘要直接用服务端契约 summary（英文单一事实源，无 overlay）。"""
     op = {"operationId": "custom_thing", "summary": "Do a custom thing"}
     assert _en_summary(op) == "Do a custom thing"
-
-
-def test_en_summary_overlay_preferred(monkeypatch):
-    op = {"operationId": "tasks_mine", "summary": "中文摘要"}
-    assert _en_summary(op) == "My task list"
+    assert _en_summary({}) == ""
 
 
 def test_parse_skips_autogen_ugly_operation_ids():
@@ -460,39 +455,43 @@ def test_parse_skips_autogen_ugly_operation_ids():
     assert "create_scene_api_scenes_bad_post" not in ids
 
 
-def test_en_overlay_covers_all_bundled_ops():
-    """帮助全英文：快照每个 op 都需英文覆盖层（或 summary 已是 ASCII），防中文泄漏。"""
+def test_snapshot_summaries_all_english():
+    """快照 summary/description 全英文（服务端单一事实源），防中文泄漏。"""
     from src.contracts import load_bundled
 
-    en = _load_en_summaries()
     bad = []
     for ms in load_bundled()["paths"].values():
         for o in ms.values():
             if not isinstance(o, dict):
                 continue
             oid = o.get("operationId", "")
-            sm = (o.get("summary") or "")
-            if oid not in en and any(ord(ch) > 127 for ch in sm):
-                bad.append(oid)
-    assert bad == [], f"缺英文覆盖层: {bad}"
+            for k in ("summary", "description"):
+                v = o.get(k)
+                if v and any(ord(ch) > 127 for ch in str(v)):
+                    bad.append((oid, k))
+    assert bad == [], f"快照仍有非英文 text: {bad}"
 
 
 def test_worker_mode_group_summary_hides_user_only(monkeypatch):
-    """WORKER：组摘要行不再列 user_only 动词（如 skills upload）；dual 保留。"""
-    import os
+    """WORKER：组摘要行不再列 user_only 动词（skills 全为 user_only → 摘要为空）；dual 保留。"""
     from src.contracts import load_bundled
 
     monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
     skills = build_groups(load_bundled())["skills"].help
-    assert "Upload a skill ZIP" not in skills
-    assert "agent" in skills  # dual 保留
+    assert "upload" not in skills.lower()
+    tasks = build_groups(load_bundled())["tasks"].help
+    assert "mine" in tasks  # tasks 为会话可用，保留
 
 
 def test_all_mode_group_summary_keeps_all(monkeypatch):
-    import os
     from src.contracts import load_bundled
 
     monkeypatch.setenv("GRAPE_CLI_MODE", "ALL")
+    up_summary = ""
+    for ms in load_bundled()["paths"].values():
+        for o in ms.values():
+            if isinstance(o, dict) and o.get("operationId") == "skills_upload":
+                up_summary = o.get("summary", "")
+                break
     skills = build_groups(load_bundled())["skills"].help
-    assert "Upload a skill ZIP" in skills
-    assert "List skills" in skills
+    assert up_summary in skills

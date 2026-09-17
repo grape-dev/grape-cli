@@ -32,26 +32,8 @@ _GROUP_INTRO = {
 _EN_SUMMARIES: dict = {}
 
 
-def _load_en_summaries() -> dict:
-    """惰性加载 operationId → 英文含义覆盖层（进程内缓存）。"""
-    global _EN_SUMMARIES
-    if not _EN_SUMMARIES:
-        try:
-            _EN_SUMMARIES = json.loads(
-                files("src").joinpath("data", "openapi.en.json").read_text(encoding="utf-8")
-            )
-        except Exception:
-            _EN_SUMMARIES = {}
-    return _EN_SUMMARIES
-
-
 def _en_summary(op: dict) -> str:
-    """帮助用英文含义：英文覆盖层 > 契约 summary > 空。"""
-    oid = op.get("operationId") or ""
-    if oid:
-        en = _load_en_summaries().get(oid)
-        if en:
-            return en
+    """命令摘要：直接用服务端契约 summary（服务端已统一英文，单一事实源）。"""
     return (op.get("summary") or "").strip()
 
 
