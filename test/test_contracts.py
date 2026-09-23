@@ -157,7 +157,7 @@ def test_bundled_fallback_does_not_write_cache(isolate_config, monkeypatch):
 
 
 def test_bundled_contract_has_refreshed_task_endpoints():
-    """内置快照应包含文档化的任务接口（notify/close/clarify/clarifications）。"""
+    """内置快照应包含当前任务的接口（complete/current/notify）。"""
     bundled = contracts.load_bundled()
     ops = {
         (p, m.lower()): o.get("operationId")
@@ -166,15 +166,15 @@ def test_bundled_contract_has_refreshed_task_endpoints():
         if isinstance(o, dict)
     }
     assert ops[("/api/tasks/notify", "post")] == "tasks_notify"
-    assert ops[("/api/tasks/close", "post")] == "tasks_close"
-    assert ops[("/api/tasks/{task_id}/clarifications", "get")] == "tasks_clarifications"
-    assert ops[("/api/tasks/{task_id}/clarify", "post")] == "tasks_clarify"
+    assert ops[("/api/tasks/complete", "post")] == "tasks_complete"
+    assert ops[("/api/tasks/current", "get")] == "tasks_current"
+    # 任务列表/启停/澄清等属平台业务，已归 runtime/issue 体系（tasks mine/close/start 不在快照）
+    assert ("/api/tasks/mine", "get") not in ops
+    assert ("/api/tasks/close", "post") not in ops
     # 规范化的 operationId（服务端自动生成的丑名已改写）
     all_ids = {oid for oid in ops.values() if oid}
     assert "knowledge_detail" in all_ids
     assert "auth_profile" in all_ids
-    mine_params = {p["name"] for p in bundled["paths"]["/api/tasks/mine"]["get"].get("parameters", [])}
-    assert {"status", "repo_key", "sort_order", "mode"} <= mine_params
 
 
 def test_bundled_contract_has_repo_tree_capabilities():

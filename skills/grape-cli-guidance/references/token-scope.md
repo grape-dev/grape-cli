@@ -21,7 +21,7 @@
 | **Agent Context（只读）** | | | |
 | `issues list/detail/events/pipeline`、`issues status get`、`issues list attachments` | dual | ✅ | ✅ |
 | `events detail` | dual | ✅ | ✅ |
-| `knowledge list/content/context/stats` | dual | ✅ | ✅ |
+| `knowledge list/detail/stats` | dual | ✅ | ✅ |
 | **Agent Context（平台侧变更，user 层）** | | | |
 | `issues mine`、`issues create/start/resume/cancel/status/confirm done`、`issues clarifications/clarify`、`issues upload/delete attachment`、`issues pipeline detail` | user_only | ❌ 403 | ✅ |
 | `knowledge add refs batch` | user_only | ❌ 403 | ✅ |
@@ -30,8 +30,10 @@
 | `git-repo ...`（全部） | session_only | ✅ | ❌ |
 | `repos git credential` / `repos workspace` | session_only | ✅ | ❌ |
 | **Account & platform** | | | |
-| `scenes list` | dual | ✅（VOD 技能） | ✅ |
-| `agents detail`、`chat conversations/messages`、`repos member/managed/deploy url`、`skills list/detail/agent stats` | user_only | ❌ 403 | ✅ |
+| `scenes detail` | dual | ✅（agent 执行期读当前场景） | ✅ |
+| `scenes list` | user_only | ❌ 403 | ✅ |
+| `agents detail`、`chat conversations/messages`、`repos member/managed/deploy url`、`skills agent stats` | user_only | ❌ 403 | ✅ |
+| `skills list/detail` | dual | ✅ | ✅ |
 
 ## 用哪个凭据（决策）
 

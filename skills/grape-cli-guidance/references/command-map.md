@@ -49,8 +49,8 @@ grape issues pipeline --owner o --repo r --number 7 --json-out     # 路线图
 grape issues mine --json-out                                       # 我的 Issue
 grape events detail --event_id <seq> --json-out
 grape knowledge list --json-out
-grape knowledge content --repo o/r --file docs/x.md --json-out      # 单条知识全文
-grape knowledge context --json-out                                 # 注入上下文文本
+grape knowledge detail --knowledge_id <id> --json-out      # 单条知识全文
+grape knowledge stats --json-out                           # 知识统计
 ```
 
 | 命令 | 用途 | Scope |
@@ -103,15 +103,18 @@ grape repos deploy url --owner o --repo_name r --json-out
 grape skills list --json-out
 grape skills detail --skill_id <id> --json-out
 grape skills agent stats --json-out
-grape scenes list --json-out          # 场景（约定 dual，VOD 可用会话访问）
+grape scenes list --json-out          # 场景列表（user_only；agent 用 scenes detail 看当前场景）
+grape scenes detail --scene_id <id> --json-out   # 场景详情（dual，agent 执行期可读）
 ```
 
 | 命令 | Scope |
 |------|-------|
 | `agents detail` / `chat conversations|messages` | `user_only` |
 | `repos member/managed/deploy url` | `user_only` |
-| `skills list/detail/agent stats` | `user_only` |
-| `scenes list` | `dual` |
+| `skills agent stats` | `user_only` |
+| `skills list/detail` | `dual`（v2.1 起会话可读技能库） |
+| `scenes list` | `user_only` |
+| `scenes detail` | `dual` |
 
 ## 5. CLI utilities（工具）
 

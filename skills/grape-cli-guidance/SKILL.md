@@ -89,8 +89,8 @@ grape issues events --owner o --repo r --number 7 --json-out
 grape issues pipeline --owner o --repo r --number 7 --json-out
 grape events detail --event_id <seq> --json-out
 grape knowledge list --json-out
-grape knowledge content --repo o/r --file docs/x.md --json-out   # 单条知识全文
-grape knowledge context --json-out                               # 注入上下文文本
+grape knowledge detail --knowledge_id <id> --json-out   # 单条知识全文
+grape knowledge stats --json-out                         # 知识统计
 ```
 > 结构化结论/澄清写进**评论**（`git-repo issues comments create`），不要调用 `issues status/clarify` 这些 user_only 变更命令。
 

@@ -240,9 +240,9 @@ def test_d_scope_403_appends_user_key_hint(monkeypatch, fake_httpx, isolate_conf
 
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
-    fake_httpx({"/api/skills": (403, {"message": "该接口不支持会话 token"})})
-    skills = cli.get_command(None, "skills").commands["list"]
-    res = CliRunner().invoke(skills, [])
+    fake_httpx({"/api/skills/categories": (403, {"message": "该接口不支持会话 token"})})
+    categories = cli.get_command(None, "skills").commands["categories"]
+    res = CliRunner().invoke(categories, [])
     assert isinstance(res.exception, CliError)
     assert res.exception.code == 403
     assert "use GRAPE_API_TOKEN / Web JWT" in str(res.exception)
@@ -257,9 +257,9 @@ def test_allow_scope_403_not_appended(monkeypatch, fake_httpx, isolate_config):
 
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
-    fake_httpx({"/api/tasks/mine": (403, {"message": "forbidden"})})
-    mine = cli.get_command(None, "tasks").commands["mine"]
-    res = CliRunner().invoke(mine, [])
+    fake_httpx({"/api/git-repo/o/r/branches": (403, {"message": "forbidden"})})
+    branches = cli.get_command(None, "git-repo").commands["branches"]
+    res = CliRunner().invoke(branches, ["--owner", "o", "--repo", "r"])
     assert isinstance(res.exception, CliError)
     assert res.exception.code == 403
     assert "use GRAPE_API_TOKEN" not in str(res.exception)
@@ -324,9 +324,9 @@ def test_worker_mode_hides_user_only_in_commands(monkeypatch, fake_httpx, isolat
     fake_httpx({})
     res = CliRunner().invoke(cli, ["commands"])
     assert res.exit_code == 0
-    assert "skills upload" not in res.output          # user_only 隐藏
+    assert "skills categories" not in res.output      # user_only 隐藏（新契约基线）
     assert "git-repo branches" in res.output          # session_only 可见
-    assert "tasks mine" in res.output                 # dual 可见
+    assert "tasks complete" in res.output             # dual 可见
 
 
 def test_user_mode_hides_session_only_in_commands(monkeypatch, fake_httpx, isolate_config):
@@ -338,8 +338,8 @@ def test_user_mode_hides_session_only_in_commands(monkeypatch, fake_httpx, isola
     res = CliRunner().invoke(cli, ["commands"])
     assert res.exit_code == 0
     assert "git-repo branches" not in res.output      # session_only 隐藏
-    assert "skills upload" in res.output              # user_only 可见
-    assert "tasks mine" in res.output
+    assert "skills categories" in res.output          # user_only 可见
+    assert "tasks complete" in res.output
 
 
 def test_mode_guard_blocks_worker_user_only(monkeypatch, fake_httpx, isolate_config):
@@ -351,8 +351,9 @@ def test_mode_guard_blocks_worker_user_only(monkeypatch, fake_httpx, isolate_con
     monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
     monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
     fake_httpx({})
-    upload = cli.get_command(None, "skills").commands["upload"]
-    res = CliRunner().invoke(upload, ["--file", "x.zip", "--agent_type", "qa"])
+    # skills_categories 仍为 user_only（新契约基线），WORKER 下应被守卫拦截
+    categories = cli.get_command(None, "skills").commands["categories"]
+    res = CliRunner().invoke(categories, [])
     assert isinstance(res.exception, CliError)
     assert "GRAPE_CLI_MODE=WORKER" in str(res.exception)
     assert "user_only" in str(res.exception)
@@ -390,21 +391,21 @@ def test_contents_raw_falls_back_to_json_for_dirs(monkeypatch, fake_httpx):
 
 
 def test_command_help_marks_token_scope():
-    """#2：user_only / session_only 命令帮助带作用域标识；allow 不带。"""
+    """#2：user_only / session_only 命令帮助带作用域标识；dual 不带。"""
     from src.contracts import load_bundled
 
     g = build_groups(load_bundled())
-    skills_list = g["skills"].commands["list"]
-    assert "session 403 → grape_/JWT" in skills_list.help
-    assert "Token scope: session (tk_) → 403" in skills_list.help
+    categories = g["skills"].commands["categories"]
+    assert "session 403 → grape_/JWT" in categories.help
+    assert "Token scope: session (tk_) → 403" in categories.help
 
     branches = g["git-repo"].commands["branches"]
     assert "session-only" in branches.help
     assert "session (tk_) only" in branches.help
 
-    mine = g["tasks"].commands["mine"]
-    assert "session-only" not in mine.help
-    assert "session 403" not in mine.help
+    complete = g["tasks"].commands["complete"]
+    assert "session-only" not in complete.help
+    assert "session 403" not in complete.help
 
 
 def test_allowed_body_field_passes_to_request(monkeypatch, fake_httpx):
@@ -516,14 +517,16 @@ def test_snapshot_summaries_all_english():
 
 
 def test_worker_mode_group_summary_hides_user_only(monkeypatch):
-    """WORKER：组摘要行不再列 user_only 动词（skills 全为 user_only → 摘要为空）；dual 保留。"""
+    """WORKER：组摘要行不列 user_only 动词（skills.categories/search 等被滤）；dual 保留。"""
     from src.contracts import load_bundled
 
     monkeypatch.setenv("GRAPE_CLI_MODE", "WORKER")
     skills = build_groups(load_bundled())["skills"].help
-    assert "upload" not in skills.lower()
+    assert "categories" not in skills.lower()   # user_only → 隐藏
+    assert "search" not in skills.lower()       # user_only → 隐藏
+    assert "list" in skills.lower()             # dual → 保留
     tasks = build_groups(load_bundled())["tasks"].help
-    assert "mine" in tasks  # tasks 为会话可用，保留
+    assert "complete" in tasks  # tasks 为会话可用，保留
 
 
 def test_all_mode_group_summary_keeps_all(monkeypatch):
