@@ -70,18 +70,46 @@ def _params_by_in(op: dict, where: str) -> list[str]:
     return [p["name"] for p in (op.get("parameters") or []) if p.get("in") == where]
 
 
-def _body_fields(meta: dict) -> list[str]:
-    """解析 requestBody schema 的字段清单（$ref 解引用到 components）。
-
-    兼容 application/json 与 multipart/form-data（上传类）。
-    """
+def _body_schema(meta: dict) -> dict:
+    """解引用 requestBody schema 到 components（兼容 application/json 与 multipart）。"""
     op = meta["op"]
     content = (op.get("requestBody") or {}).get("content") or {}
     ct = content.get("application/json") or content.get("multipart/form-data") or {}
     sch = ct.get("schema") or {}
     name = (sch.get("$ref") or "").rsplit("/", 1)[-1]
-    schema = meta.get("schemas", {}).get(name, {}) if name else (sch or {})
-    return sorted(schema.get("properties") or {})
+    return meta.get("schemas", {}).get(name, {}) if name else (sch or {})
+
+
+def _body_fields(meta: dict) -> list[str]:
+    """解析 requestBody schema 的字段清单（$ref 解引用到 components）。
+
+    兼容 application/json 与 multipart/form-data（上传类）。
+    """
+    return sorted(_body_schema(meta).get("properties") or {})
+
+
+def _body_field_meta(meta: dict) -> list[dict]:
+    """字段元信息 [{name, required, type}]：required 读 schema.required（契约权威）。"""
+    schema = _body_schema(meta)
+    props = schema.get("properties") or {}
+    required = set(schema.get("required") or [])
+    return [
+        {
+            "name": k,
+            "required": k in required,
+            "type": (v.get("type") if isinstance(v, dict) else "") or "string",
+        }
+        for k, v in sorted(props.items())
+    ]
+
+
+def _body_fields_help(meta: dict) -> str:
+    """Body fields 帮助行：`title* (required string), head* (required string), ...`（英文）。"""
+    out = ", ".join(
+        f"{f['name']}* (required {f['type']})" if f["required"] else f"{f['name']} ({f['type']})"
+        for f in _body_field_meta(meta)
+    )
+    return out or "(free-form JSON)"
 
 
 _EXAMPLES: dict = {}
@@ -189,23 +217,47 @@ def _read_json_arg(raw) -> str:
     return raw
 
 
+# 已知「能力位缺失」白名单：字段契约不支持时给出人读指引，避免 agent 原地试错（见 docs/grape-cli-help-and-hints-optimization.md §3.3）。
+# 键：`group verb...`（空格分隔），值：{不支持的字段: 英文行动指引}。
+_UNSUPPORTED_FIELD_HINTS: dict[str, dict[str, str]] = {
+    "git-repo pulls update": {
+        "state": "'state' is not supported here; closing/deprecating a PR is not available via this command",
+    },
+}
+
+
 def _validate_body(meta: dict, body, body_fields: list[str]) -> None:
-    """请求体未知字段守卫（通用）：可枚举 schema 时，--json 内键必须都在允许集内。
+    """请求体守卫（通用）：可枚举 schema 时，--json 内键必须都在允许集内。
 
     不支持的字段及时报错并列出允许字段，避免服务端 200 静默空转；服务端后续补字段后自动放行。
+    追加：缺失必填字段（schema.required）报错 + 已知能力位缺失给行动指引。
     """
     if not body_fields or not isinstance(body, dict):
         return
+    cmd_path = f"grape {meta['group']} {' '.join(meta['verb'])}"
     allowed = set(body_fields)
     unknown = sorted(set(body) - allowed)
-    if not unknown:
-        return
-    cmd_path = f"grape {meta['group']} {' '.join(meta['verb'])}"
-    raise CliError(
-        "unknown request field(s): " + ", ".join(unknown) + "\n"
-        f"allowed for {meta['method']} {meta['path']}: " + ", ".join(body_fields) + "\n"
-        f"see `{cmd_path} --help` for the JSON request schema"
-    )
+    # 能力位缺失 → 优先给行动指引（白名单），替代冷冰冰 unknown field
+    hint_key = f"{meta['group']} {' '.join(meta['verb'])}"
+    for f in unknown:
+        hint = _UNSUPPORTED_FIELD_HINTS.get(hint_key, {}).get(f)
+        if hint:
+            raise CliError(hint)
+    if unknown:
+        raise CliError(
+            "unknown request field(s): " + ", ".join(unknown) + "\n"
+            f"allowed for {meta['method']} {meta['path']}: " + ", ".join(body_fields) + "\n"
+            f"see `{cmd_path} --help` for the JSON request schema"
+        )
+    # 缺失必填字段（schema.required 契约权威）
+    required_meta = [f for f in _body_field_meta(meta) if f["required"]]
+    missing = sorted(f["name"] for f in required_meta if f["name"] not in body)
+    if missing:
+        raise CliError(
+            "missing required request field(s): " + ", ".join(missing) + "\n"
+            f"required for {meta['method']} {meta['path']}: " + ", ".join(f["name"] for f in required_meta) + "\n"
+            f"see `{cmd_path} --help` for the JSON request schema"
+        )
 
 
 def build_command(meta: dict) -> click.Command:
@@ -334,9 +386,11 @@ def build_command(meta: dict) -> click.Command:
         help_lines.append("Token scope: session (tk_) only; API key / JWT → 403")
     body_fields = _body_fields(meta)
     if body_fields:
-        help_lines.append(f"Body fields: {', '.join(body_fields)}")
+        help_lines.append(f"Body fields: {_body_fields_help(meta)}")
+        help_lines.append("Long JSON body hint: use --json @file.json (multi-line, no escaping)")
     elif has_body:
         help_lines.append("Body fields: (free-form JSON)")
+        help_lines.append("Long JSON body hint: use --json @file.json (multi-line, no escaping)")
     example_lines = _example_args(meta, path_params, query_params, body_fields)
     if example_lines:
         help_lines += ["", "Examples:"]

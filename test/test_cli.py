@@ -79,6 +79,35 @@ def test_commands_lists_contract_commands(env, fake_httpx, standard_router):
     # 输出为可调用命令名（空格分隔），不泄露冗余 contents_root
     assert "git-repo issues_list" not in res.output
     assert "contents_root" not in res.output
+    # 多级子命令（git-repo issues list）在 commands 里可发现
+    assert "git-repo issues list" in res.output
+
+
+def test_commands_matches_group_help_verbs(env, fake_httpx, standard_router):
+    """grape commands 与 grape <group> --help 动词集合一致（命令发现双入口）。"""
+    import click
+
+    fake_httpx(standard_router)
+    res = CliRunner().invoke(cli, ["commands"])
+    assert res.exit_code == 0
+    commands_out = set(res.output.splitlines())
+    # 从组帮助定位可用叶子，确认 commands 全都在其中（以 git-repo/issues 多级组为例）
+    grp = cli.get_command(None, "git-repo")
+    assert grp is not None
+    leafs = set()
+
+    def _walk(g, prefix):
+        for n in sorted(g.commands):
+            g2 = g.commands[n]
+            if isinstance(g2, click.Group):
+                _walk(g2, f"{prefix} {n}")
+            else:
+                leafs.add(f"{prefix} {n}".strip())
+
+    _walk(grp, "git-repo")
+    assert leafs, "no leaves found in git-repo group"
+    for leaf in leafs:
+        assert leaf in commands_out, f"commands 缺 {leaf}"
 
 
 def test_generated_command_runs(env, fake_httpx, standard_router):

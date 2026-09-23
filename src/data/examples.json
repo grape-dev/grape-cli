@@ -35,9 +35,15 @@
   "gitrepo_issues_comments_list": "--owner o --repo r --number 7 --json-out",
   "gitrepo_issues_comments_create": "--owner o --repo r --number 7 --json '{\"body\":\"<comment>\"}'",
   "gitrepo_pulls_list": "--owner o --repo r --state open --json-out",
-  "gitrepo_pulls_create": "--owner o --repo r --json '{\"title\":\"<title>\",\"head\":\"<branch>\",\"base\":\"main\"}'",
+  "gitrepo_pulls_create": [
+    "--owner o --repo r --json '{\"title\":\"<title>\",\"head\":\"feat/x\",\"base\":\"main\",\"inner_issue_nums\":\"o/r#5\",\"close_related_issue\":true}' --json-out",
+    "--owner o --repo r --json @pr.json --json-out"
+  ],
   "gitrepo_pulls_get": "--owner o --repo r --number 7 --json-out",
-  "gitrepo_pulls_update": "--owner o --repo r --number 7 --json '{\"title\":\"<title>\"}'",
+  "gitrepo_pulls_update": [
+    "--owner o --repo r --number 7 --json '{\"title\":\"<new title>\"}'",
+    "--owner o --repo r --number 7 --json '{\"body\":\"<PR description>\"}'"
+  ],
   "gitrepo_pulls_merge": "--owner o --repo r --number 7 --json-out",
   "gitrepo_pulls_comments_list": "--owner o --repo r --number 7 --json-out",
   "gitrepo_pulls_comments_create": "--owner o --repo r --number 7 --json '{\"body\":\"<comment>\"}'",
@@ -57,6 +63,7 @@
   "skills_sub_read": "--skill_id <id> --sub_name SKILL.md --json-out",
   "skills_sub_package": "--pkg_id <id> --sub_name SKILL.md --json-out",
   "scenes_list": "--json-out",
+  "scenes_detail": "--scene_id <id> --json-out",
   "events_detail": "--event_id <id> --json-out",
   "agents_detail": "--json-out",
   "chat_conversations": "--json-out",

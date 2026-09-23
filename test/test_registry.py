@@ -433,6 +433,49 @@ def test_freeform_body_not_validated(sample_schema):
     _validate_body(meta, {"anything": 1}, bf)  # 不抛异常
 
 
+def test_help_renders_required_marker_and_file_hint():
+    """help 显示必填星号字段与 --json @file.json 引导（英文）。"""
+    from src.contracts import load_bundled
+
+    groups = build_groups(load_bundled())
+    create = groups["git-repo"].commands["labels"].commands["create"]
+    assert "name* (required string)" in create.help
+    assert "Long JSON body hint: use --json @file.json" in create.help
+
+
+def test_missing_required_request_field_rejected(monkeypatch, isolate_config):
+    """schema.required 缺失 → 报缺少必填字段（而非网络请求）。"""
+    import pytest
+    from src.contracts import load_bundled
+    from src.client import CliError
+    from src.registry import _body_fields, _validate_body
+
+    ops = parse_operations(load_bundled())
+    meta = next(o for o in ops if o["operationId"] == "gitrepo_labels_create")
+    bf = _body_fields(meta)
+    # LabelCreateBody 契约 required=["name"]
+    with pytest.raises(CliError) as ei:
+        _validate_body(meta, {"color": "#d73a4a"}, bf)
+    assert "missing required request field(s)" in str(ei.value)
+    assert "name" in str(ei.value)
+
+
+def test_unsupported_field_gives_actionable_hint():
+    """pulls update 的 state 字段：能力位缺失 → 行动指引而非冷冰冰 unknown field。"""
+    import pytest
+    from src.contracts import load_bundled
+    from src.client import CliError
+    from src.registry import _body_fields, _validate_body
+
+    ops = parse_operations(load_bundled())
+    meta = next(o for o in ops if o["operationId"] == "gitrepo_pulls_update")
+    bf = _body_fields(meta)
+    with pytest.raises(CliError) as ei:
+        _validate_body(meta, {"state": "closed"}, bf)
+    assert "state" in str(ei.value)
+    assert "not supported" in str(ei.value)
+
+
 def test_en_summary_uses_contract_summary():
     """摘要直接用服务端契约 summary（英文单一事实源，无 overlay）。"""
     op = {"operationId": "custom_thing", "summary": "Do a custom thing"}
