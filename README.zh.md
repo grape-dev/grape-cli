@@ -26,7 +26,9 @@
 
 ## grape CLI 是什么
 
-grape CLI 是 [Grape](https://gitcode.com/grape-dev/grape) 平台的命令行客户端。它读取服务端
+grape CLI 是 [Grape](https://gitcode.com/grape-dev/grape) 平台**主要面向 Agent 设计**的命令行客户端：
+围绕代码仓的 DevOps 流程，为 Agent 提供该代码仓的全部上下文，让 Agent 更精准地理解项目背景，
+从而更精准地实现开发者针对该项目的需求。它读取服务端
 OpenAPI 契约，自动生成 `grape <group> <verb>` 命令，并在本地以进程内凭据的方式运行原生
 `git` 操作。
 

@@ -26,9 +26,12 @@
 
 ## What is grape CLI
 
-Grape CLI is the command-line client for the [Grape](https://gitcode.com/grape-dev/grape) platform.
-It reads the server's OpenAPI contract, auto-generates `grape <group> <verb>` commands, and runs
-native `git` operations locally with credentials kept strictly in-process.
+Grape CLI is the command-line client for the [Grape](https://gitcode.com/grape-dev/grape) platform,
+**designed primarily for Agents**. It walks the repository's DevOps workflow and gives an Agent the
+full context of that repo, so the Agent can precisely understand the project background and turn a
+developer's requirements into accurate, implementation-ready actions. It reads the server's OpenAPI
+contract, auto-generates `grape <group> <verb>` commands, and runs native `git` operations locally
+with credentials kept strictly in-process.
 
 **In one sentence: add a server endpoint → re-fetch the contract → the CLI gains the command, no source changes.**
 
