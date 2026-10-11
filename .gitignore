@@ -20,3 +20,23 @@ DEPLOYMENT-WORKER.md
 
 # 临时文件（issue 抓取等）
 temp/
+
+# 开源内部规划文档，不入库
+docs/grape-cli-opensource-prep.md
+docs/grape-release-wheel-distribution.md
+
+# 密钥与凭据文件
+*.pem
+*.key
+*.p12
+*.cer
+*.crt
+
+# 日志 / 覆盖率
+*.log
+.coverage
+coverage/
+htmlcov/
+
+# 构建产物
+*.whl

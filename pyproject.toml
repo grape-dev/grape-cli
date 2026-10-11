@@ -1,12 +1,32 @@
 [project]
 name = "grape"
 version = "0.3.3"
-description = "Agentic DevOps CLI：契约驱动命令生成 + git 本地传输（token 零暴露）"
+description = "Agentic DevOps CLI: contract-driven command generation + native git passthrough (zero token exposure)"
+readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Yuzhe Liao", email = "jansonzhe@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+]
 dependencies = [
     "click>=8.0",
     "httpx>=0.24",
 ]
+
+[project.urls]
+Homepage = "https://gitcode.com/grape-dev/grape-cli"
+Source = "https://gitcode.com/grape-dev/grape-cli"
+Issues = "https://gitcode.com/grape-dev/grape-cli/issues"
 
 [project.optional-dependencies]
 dev = [
