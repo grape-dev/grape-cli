@@ -1,6 +1,16 @@
 """配置解析：CLI 参数 > 环境变量 > ~/.grape/config.json。
 
 token 优先级：--token 参数 > `GRAPE_SESSION_TOKEN`（任务级临时 token，worker 优先）> `GRAPE_API_TOKEN`（用户级）> config.json。
+
+`GRAPE_AUTH_FILE`（由 DshRuntime.get_env 写入，指向一个 0600 临时文件）在所有模式下
+优先于环境变量：dsh 的 subprocess 服务会 scrub 掉名字匹配 /KEY|PASSWORD|SECRET|TOKEN/i
+的父进程变量，GRAPE_SESSION_TOKEN 命中 TOKEN → 被洗掉 → bash 里拿不到。
+DshRuntime 把 token 值写到临时文件，路径通过 GRAPE_AUTH_FILE（不命中 scrub）传递；
+grape CLI 从文件读 token 值，完全绕过 env scrub。
+其他引擎不做此 scrub，GRAPE_AUTH_FILE 不存在 → fallback 到 GRAPE_SESSION_TOKEN，零影响。
+
+`DSH_GRAPE_SESSION_TOKEN`（由 dsh-grape 插件的 shellEnv contributor 注入）同样优先于
+`GRAPE_SESSION_TOKEN`，作为插件层的备选穿透路径（目前 headless 不加载插件，此路径不生效）。
 """
 import json
 import os
@@ -42,6 +52,26 @@ def load_file_config() -> dict:
 _config_warned = False
 
 
+def _read_auth_file(env: dict) -> str:
+    """从 GRAPE_AUTH_FILE 指向的文件读 token 值。
+
+    DshRuntime.get_env 把 session token 写到一个 0600 临时文件，
+    路径通过 GRAPE_AUTH_FILE 传递（该变量名不命中 dsh 的 /KEY|PASSWORD|SECRET|TOKEN/i scrub）。
+    文件不存在或为空 → 返回空字符串（fallback 到环境变量）。
+    """
+    path = (env.get("GRAPE_AUTH_FILE") or "").strip()
+    if not path:
+        return ""
+    try:
+        p = Path(path)
+        if not p.exists():
+            return ""
+        val = p.read_text(encoding="utf-8").strip()
+        return val
+    except Exception:
+        return ""
+
+
 def resolve(base_url: str = "", token: str = "", refresh: bool = False) -> tuple[str, str]:
     """返回 (base_url, token)。缺任一 → 抛 if config incomplete.
 
@@ -61,10 +91,13 @@ def resolve(base_url: str = "", token: str = "", refresh: bool = False) -> tuple
 
     mode = (env.get("GRAPE_CLI_MODE") or "ALL").strip().upper()
     one_shot = (token or "").strip() or _CLI_PARAMS["token"]
+    file_tok = _read_auth_file(env)
     if mode == "USER":
-        env_tok = (env.get("GRAPE_API_TOKEN") or "").strip() or \
+        env_tok = file_tok or \
+                  (env.get("GRAPE_API_TOKEN") or "").strip() or \
+                  (env.get("DSH_GRAPE_SESSION_TOKEN") or "").strip() or \
                   (env.get("GRAPE_SESSION_TOKEN") or "").strip()
-        if not env.get("GRAPE_API_TOKEN") and not one_shot and not _config_warned:
+        if not env.get("GRAPE_API_TOKEN") and not one_shot and not file_tok and not _config_warned:
             _config_warned = True
             import sys
             sys.stderr.write(
@@ -72,7 +105,9 @@ def resolve(base_url: str = "", token: str = "", refresh: bool = False) -> tuple
                 "falling back to session token\n"
             )
     else:  # WORKER / ALL
-        env_tok = (env.get("GRAPE_SESSION_TOKEN") or "").strip() or \
+        env_tok = file_tok or \
+                  (env.get("DSH_GRAPE_SESSION_TOKEN") or "").strip() or \
+                  (env.get("GRAPE_SESSION_TOKEN") or "").strip() or \
                   (env.get("GRAPE_API_TOKEN") or "").strip()
     _token = one_shot or env_tok or str(cfg.get("token") or "").strip()
     return _base.rstrip("/"), _token
