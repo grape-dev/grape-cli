@@ -203,17 +203,25 @@ def _cmd_allowed(cmd) -> bool:
 
 
 def _read_json_arg(raw) -> str:
-    """--json 入参读取：`@file.json` 读文件、`@-` 读 stdin，其余原样返回。"""
+    """--json 入参读取：`@file.json` 读文件、`@-` 读 stdin，其余原样返回。
+
+    文件/stdin 内容为空或纯空白时立即报错（含来源路径），
+    避免与「非法 JSON」文案混淆导致排障困难。
+    """
     if isinstance(raw, str) and raw.startswith("@"):
         path = raw[1:]
         try:
             if path == "-":
                 import sys
-                return sys.stdin.read()
-            with open(path, encoding="utf-8") as f:
-                return f.read()
+                text = sys.stdin.read()
+            else:
+                with open(path, encoding="utf-8") as f:
+                    text = f.read()
         except OSError as e:
             raise CliError(f"cannot read --json file '{path}': {e}")
+        if not text.strip():
+            raise CliError(f"--json file '{path}' is empty")
+        return text
     return raw
 
 
@@ -331,11 +339,22 @@ def build_command(meta: dict) -> click.Command:
             form_data = {f: kw.get(f) for f in multipart_fields if kw.get(f)}
         else:
             raw = kw.get("json")
-            if has_body and raw:
+            if has_body and raw is not None:
+                if not str(raw).strip():
+                    raise CliError(
+                        "--json value is empty; provide a JSON string or @file.json"
+                    )
                 try:
                     body = json.loads(_read_json_arg(raw))
                 except CliError:
                     raise
+                except json.JSONDecodeError as e:
+                    _src = (f"--json file '{raw[1:]}'"
+                            if str(raw).startswith("@") else "inline --json string")
+                    raise CliError(
+                        f"invalid JSON in {_src}: {e.msg} "
+                        f"(line {e.lineno} column {e.colno})"
+                    )
                 except Exception:
                     raise CliError("--json is not a valid JSON string")
                 if body_fields and not isinstance(body, dict):

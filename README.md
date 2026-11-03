@@ -129,6 +129,7 @@ grape skills upload --file skill.zip --scope user --agent_type coding
 
 - `query` / `path` params → `--<name>`; `requestBody` → `--json '<JSON>'`; `--json-out` → single-line machine-readable JSON.
 - Long bodies: `--json @file.json` reads from a file, `--json @-` reads from stdin (no shell escaping).
+- `--json` failure semantics: missing file → `cannot read --json file '<path>': ...`; empty/blank file or stdin → `--json file '<path>' is empty`; invalid JSON → `invalid JSON in --json file '<path>'|inline --json string: <msg> (line L column C)`; empty `--json` value → `--json value is empty` (no request is sent). All failures exit non-zero with a message on stderr.
 - Multipart endpoints (uploads) use `--file <path>` plus form-field options; `git-repo contents --raw` decodes a file to raw text.
 - `--json` bodies are validated against the contract — unknown fields / missing required fields fail fast and print the allowed field list.
 - Discover: `grape <group> --help` (verbs) then `grape <group> <verb> --help` (params, body fields, examples). Unknown verbs get a `Did you mean ...` suggestion.
