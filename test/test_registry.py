@@ -201,6 +201,94 @@ def test_json_at_missing_file_errors(monkeypatch, fake_httpx, tmp_path):
     assert "cannot read --json file" in str(res.exception)
 
 
+def _invoke_update(json_arg):
+    from click.testing import CliRunner
+    from src.cli import cli
+
+    update = cli.get_command(None, "git-repo").commands["issues"].commands["update"]
+    return CliRunner().invoke(update, ["--owner", "o", "--repo", "r", "--number", "7",
+                                       "--json", json_arg])
+
+
+def test_json_at_empty_file_errors(monkeypatch, fake_httpx, tmp_path):
+    """--json @空文件（含纯空白）→ 报错指出文件为空，与非法 JSON 文案可区分。"""
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    empty = tmp_path / "empty.json"
+    empty.write_text("", encoding="utf-8")
+    res = _invoke_update(f"@{empty}")
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "is empty" in str(res.exception)
+    assert str(empty) in str(res.exception)
+
+    blank = tmp_path / "blank.json"
+    blank.write_text("   \n\t", encoding="utf-8")
+    res = _invoke_update(f"@{blank}")
+    assert res.exit_code != 0
+    assert "is empty" in str(res.exception)
+
+
+def test_json_at_invalid_file_has_position(monkeypatch, fake_httpx, tmp_path):
+    """--json @非法JSON → 报错含文件路径与行列信息。"""
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    bad = tmp_path / "bad.json"
+    bad.write_text('{"body": oops}', encoding="utf-8")
+    res = _invoke_update(f"@{bad}")
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "invalid JSON in --json file" in str(res.exception)
+    assert str(bad) in str(res.exception)
+    assert "line 1" in str(res.exception)
+    assert "column" in str(res.exception)
+
+
+def test_json_inline_invalid_has_position(monkeypatch, fake_httpx):
+    """内联非法 JSON → 报错含行列信息，文案与 @file 场景区分。"""
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    fake_httpx({})
+    res = _invoke_update('{"body": oops}')
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "invalid JSON in inline --json string" in str(res.exception)
+    assert "line 1" in str(res.exception)
+
+
+def test_json_empty_value_errors_without_request(monkeypatch, fake_httpx):
+    """--json ''（空字符串）→ 直接报错，不发空 body 请求（不再 HTTP 422 兜底）。"""
+    from src.client import CliError
+
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    calls = fake_httpx({})
+    res = _invoke_update("")
+    assert res.exit_code != 0
+    assert isinstance(res.exception, CliError)
+    assert "--json value is empty" in str(res.exception)
+    assert not calls  # 未发出任何 HTTP 请求
+
+
+def test_json_valid_still_works(monkeypatch, fake_httpx):
+    """回归：合法 JSON 请求行为不变。"""
+    monkeypatch.setenv("GRAPE_SESSION_TOKEN", "tk_test")
+    monkeypatch.setenv("GRAPE_BASE_URL", "http://x")
+    calls = fake_httpx({"/api/git-repo/o/r/issues/7": (200, {"ok": True})})
+    res = _invoke_update('{"body":"new body"}')
+    assert res.exit_code == 0
+    patch_bodies = [k.get("json") for m, _, k in calls if m == "PATCH"]
+    assert {"body": "new body"} == patch_bodies[0]
+
+
 def test_contents_omits_path_lists_root(monkeypatch, fake_httpx):
     """contents 缺省 --path → 根目录列表（规整到 /contents 根路由）。"""
     from urllib.parse import urlsplit

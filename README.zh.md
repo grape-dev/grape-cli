@@ -127,6 +127,7 @@ grape skills upload --file skill.zip --scope user --agent_type coding
 
 - `query` / `path` 参数 → `--<name>`；`requestBody` → `--json '<JSON>'`；`--json-out` → 单行机器可读 JSON。
 - 长请求体：`--json @file.json` 从文件读取，`--json @-` 从 stdin 读取（免转义）。
+- `--json` 失败语义：文件不存在 → `cannot read --json file '<path>': ...`；空文件/纯空白 → `--json file '<path>' is empty`；非法 JSON → `invalid JSON in --json file '<path>'|inline --json string: <msg> (line L column C)`；`--json` 空值 → `--json value is empty`（不发请求）。所有失败均在 stderr 输出并以非零码退出。
 - multipart 上传类端点用 `--file <路径>` + 表单字段参数；`git-repo contents --raw` 把单文件内容解码为原文。
 - `--json` 请求体会按契约校验——未知字段 / 缺失必填字段立即报错，并列出允许字段。
 - 可用性：`grape <group> --help` 查看动词，`grape <group> <verb> --help` 查看参数、body 字段与示例；动词拼写错误会有 `Did you mean ...` 提示。
